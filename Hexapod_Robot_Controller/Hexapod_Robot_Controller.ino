@@ -1,7 +1,7 @@
 #include <MPU6050.h>
-
 #include <HCSR04.h>
 #include <Servo.h>
+#include "RobotStructure.h"
 
 // =======================
 // =========CONFIG========
@@ -83,20 +83,6 @@
 // ========STRUCT========
 // ======================
 
-struct leg{
-  int femur;
-  int tibia;
-  
-  Servo rotate;
-  int rotateAngle;
-
-  Servo lift;
-  int liftAngle;
-
-  Servo knee;
-  int kneeAngle;
-};
-
 // =======================
 // =======VARIABLES=======
 // =======================
@@ -104,31 +90,41 @@ struct leg{
 //ultrasonic distance sensor
 int distance = 0;
 
-//Gyro and Accelerometer data 
+//Gyro and Accelerometer data
+MPU6050 mpu;
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
 
 //Robot head Servos
 Servo headRotate;
 Servo headLift;
 
 //Robot legs
-leg frontRight;
-leg middleRight;
-leg backRight;
+Leg frontRight;
+Leg middleRight;
+Leg backRight;
 
-leg frontLeft;
-leg middleLeft;
-leg backLeft;
+Leg frontLeft;
+Leg middleLeft;
+Leg backLeft;
 
 
 
 void setup() {
+  //serial monitor
+  Serial.begin(9600);
+
   //Setup the ultrasonic sensor
   HCSR04.begin(TRIG_PIN, ECHO_PIN);
+
+  //setup the MPU6050
+  Wire.begin();
+  mpu.initialize();
 
   // === ATTACH SERVOS ==
   attachServos();
   // ====================
-  
+
   // === SET LEGS TO INITIAL ANGLES ===
 
   legSetAngles(&frontRight, FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
@@ -138,11 +134,13 @@ void setup() {
   legSetAngles(&frontLeft, FL_ROTATE_INIT_ANGLE, FL_LIFT_INIT_ANGLE, FL_KNEE_INIT_ANGLE);
   legSetAngles(&middleLeft, ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
   legSetAngles(&backLeft, BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
-  
+
   // ==================================
 
 
-  
+
+  Serial.println("ax ay az");
+  //Serial.println("gx gy gz");
 }
 
 void loop() {
@@ -150,15 +148,25 @@ void loop() {
   distance = HCSR04.measureDistanceCm();
 
   //get balance data
-  
+  getBalanceData();
+  /* mpu print data
+    Serial.print(mpu.getAccelerationX());
+    Serial.print(" ");
+    Serial.println(mpu.getAccelerationY());
+  */
   //get new angles from input data (from ROS)
-
+  
+  
   //set the new leg angles
 
+  legSetAngles(&middleRight, middleRight.rotateAngle, middleRight.liftAngle, middleRight.kneeAngle + 10);
+  
   //send data
+
+  delay(100);
 }
 
-void attachServos(){
+void attachServos() {
   // ===> LEGS:
   //Setup the Front right legs
   frontRight.rotate.attach(FR_ROTATE_PIN);
@@ -169,7 +177,7 @@ void attachServos(){
   middleRight.rotate.attach(MR_ROTATE_PIN);
   middleRight.lift.attach(MR_LIFT_PIN);
   middleRight.knee.attach(MR_KNEE_PIN);
-  
+
   //Setup the Bsck right legs
   backRight.rotate.attach(BR_ROTATE_PIN);
   backRight.lift.attach(BR_LIFT_PIN);
@@ -179,8 +187,8 @@ void attachServos(){
   frontLeft.rotate.attach(FL_ROTATE_PIN);
   frontLeft.lift.attach(FL_LIFT_PIN);
   frontLeft.knee.attach(FL_KNEE_PIN);
-  
-  
+
+
   //Setup the Middle left legs
   middleLeft.rotate.attach(ML_ROTATE_PIN);
   middleLeft.lift.attach(ML_LIFT_PIN);
@@ -193,22 +201,42 @@ void attachServos(){
 
   // ===> HEAD:
   headRotate.attach(HEAD_ROTATE_PIN);
-  headLift.attach(HEAD_LIFT_PIN);  
+  headLift.attach(HEAD_LIFT_PIN);
 
 
 }
 
-void legSetAngles(leg *leg, int _rotateAngle, int _liftAngle, int _kneeAngle){
+void legSetAngles(Leg *leg, int _rotateAngle, int _liftAngle, int _kneeAngle) {
   leg->rotate.write(_rotateAngle);
   leg->rotateAngle = _rotateAngle;
   delay(SERVO_WRITE_DELAY);
-  
+
   leg->lift.write(_liftAngle);
   leg->liftAngle = _liftAngle;
   delay(SERVO_WRITE_DELAY);
-  
+
   leg->knee.write(_kneeAngle);
   leg->kneeAngle = _kneeAngle;
   delay(SERVO_WRITE_DELAY);
-  
+
+}
+
+void updateLeg(Leg *leg, Leg *newLeg) {
+  leg->rotate.write(newLeg->rotateAngle);
+  leg->rotateAngle = newLeg->rotateAngle;
+  delay(SERVO_WRITE_DELAY);
+
+  leg->lift.write(newLeg->liftAngle);
+  leg->liftAngle = newLeg->liftAngle;
+  delay(SERVO_WRITE_DELAY);
+
+  leg->knee.write(newLeg->kneeAngle);
+  leg->kneeAngle = newLeg->kneeAngle;
+  delay(SERVO_WRITE_DELAY);
+}
+void getBalanceData() {
+  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  //ax = map(ax, -17000, 17000, 0, 255 ); // X axis data
+  //ay = map(ay, -17000, 17000, 0, 255); // Y axis data
+  //az = map(az, -17000, 17000, 0, 255);  // Z axis data
 }
