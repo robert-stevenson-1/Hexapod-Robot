@@ -1,83 +1,7 @@
 #include <MPU6050.h>
 #include <HCSR04.h>
 #include <Servo.h>
-#include "RobotStructure.h"
-
-// =======================
-// =========CONFIG========
-// =======================
-
-// == SERVO WAIT DELAY ==
-#define SERVO_WRITE_DELAY 15
-// ======================
-
-// === LEG SERVO INTIAL ANGLES ===
-#define FR_ROTATE_INIT_ANGLE 90
-#define FR_LIFT_INIT_ANGLE 125
-#define FR_KNEE_INIT_ANGLE 110
-
-#define MR_ROTATE_INIT_ANGLE 90
-#define MR_LIFT_INIT_ANGLE 125
-#define MR_KNEE_INIT_ANGLE 110
-
-#define BR_ROTATE_INIT_ANGLE 90
-#define BR_LIFT_INIT_ANGLE 125
-#define BR_KNEE_INIT_ANGLE 110
-
-#define FL_ROTATE_INIT_ANGLE 90
-#define FL_LIFT_INIT_ANGLE 55
-#define FL_KNEE_INIT_ANGLE 70
-
-#define ML_ROTATE_INIT_ANGLE 90
-#define ML_LIFT_INIT_ANGLE 55
-#define ML_KNEE_INIT_ANGLE 70
-
-#define BL_ROTATE_INIT_ANGLE 90
-#define BL_LIFT_INIT_ANGLE 55
-#define BL_KNEE_INIT_ANGLE 70
-
-// ===============================
-
-// === LEG SERVO PINS ===
-#define FL_ROTATE_PIN 22
-#define FL_LIFT_PIN 24
-#define FL_KNEE_PIN 23
-
-#define ML_ROTATE_PIN 25
-#define ML_LIFT_PIN 26
-#define ML_KNEE_PIN 27
-
-#define BL_ROTATE_PIN 28
-#define BL_LIFT_PIN 29
-#define BL_KNEE_PIN 30
-
-#define FR_ROTATE_PIN 31
-#define FR_LIFT_PIN 32
-#define FR_KNEE_PIN 33
-
-#define MR_ROTATE_PIN 34
-#define MR_LIFT_PIN 35
-#define MR_KNEE_PIN 36
-
-#define BR_ROTATE_PIN 37
-#define BR_LIFT_PIN 38
-#define BR_KNEE_PIN 39
-
-// ======================
-
-// === HEAD LEG PINS ===
-
-#define HEAD_ROTATE_PIN 40
-#define HEAD_LIFT_PIN 41
-
-// =====================
-
-// === ULTRASONIC PINS ===
-
-#define ECHO_PIN 42
-#define TRIG_PIN 43
-
-// =======================
+#include "Robot.h"
 
 // ======================
 // ========STRUCT========
@@ -88,7 +12,7 @@
 // =======================
 
 //ultrasonic distance sensor
-int distance = 0;
+double distance = 0;
 
 //Gyro and Accelerometer data
 MPU6050 mpu;
@@ -99,21 +23,15 @@ int16_t gx, gy, gz;
 Servo headRotate;
 Servo headLift;
 
-//Robot legs
-Leg frontRight;
-Leg middleRight;
-Leg backRight;
-
-Leg frontLeft;
-Leg middleLeft;
-Leg backLeft;
-
-
+Robot robot;
+//Leg fr;
 
 void setup() {
   //serial monitor
   Serial.begin(9600);
 
+  robot = Robot();
+  
   //Setup the ultrasonic sensor
   HCSR04.begin(TRIG_PIN, ECHO_PIN);
 
@@ -128,52 +46,93 @@ void setup() {
 
   // === SET LEGS TO INITIAL ANGLES ===
 
-  legSetAngles(&frontRight, FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
+  //fr.moveLeg(0, 0 , 0);
+  robot.updateLeg(&robot.getFr(), FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
   delay(20);
-  legSetAngles(&middleRight, MR_ROTATE_INIT_ANGLE, MR_LIFT_INIT_ANGLE, MR_KNEE_INIT_ANGLE);
+  robot.updateLeg(&robot.getMr(), MR_ROTATE_INIT_ANGLE, MR_LIFT_INIT_ANGLE, MR_KNEE_INIT_ANGLE);
   delay(20);
-  legSetAngles(&backRight, BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
+  robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
   delay(20);
-  legSetAngles(&frontLeft, FL_ROTATE_INIT_ANGLE, FL_LIFT_INIT_ANGLE, FL_KNEE_INIT_ANGLE);
+  robot.updateLeg(&robot.getFl(), FL_ROTATE_INIT_ANGLE, FL_LIFT_INIT_ANGLE, FL_KNEE_INIT_ANGLE);
   delay(20);
-  legSetAngles(&middleLeft, ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
+  robot.updateLeg(&robot.getMl(), ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
   delay(20);
-  legSetAngles(&backLeft, BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
+  robot.updateLeg(&robot.getBl(), BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
 
   // ==================================
 
 
 
-  Serial.println("ax ay az");
-  //Serial.println("gx gy gz");
+  Serial.println("ax ay "); //az
+  Serial.println("gx gy gz");
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  distance = HCSR04.measureDistanceCm();
+  distance = *(HCSR04.measureDistanceCm());
 
+  Serial.println(robot.getBl().getHipRotate().attached());
   //get balance data
-  getBalanceData();
+  //getBalanceData();
   // mpu print data
+  /*
     Serial.print(mpu.getAccelerationX());
     Serial.print(" ");
-    Serial.println(mpu.getAccelerationY());
-  //get new angles from input data (from ROS)
-  
-  
+    Serial.println(mpu.getAccelerationY());  
+    Serial.print(" ");
+    Serial.print(mpu.getRotationX());
+    Serial.print(" ");
+    Serial.print(mpu.getRotationY());
+    Serial.print(" ");
+    Serial.print(mpu.getRotationZ());
+    Serial.print(" ");
+        */
   //set the new leg angles
-
-  //legSetAngles(&middleRight, middleRight.rotateAngle, middleRight.liftAngle, middleRight.kneeAngle);
+  
   
   //send data
 
   delay(100);
 }
 
+void serialMonitorTest(){
+  String angleStr = "";
+  int angle = 90;
+  if(Serial.available() > 0){
+    angleStr = Serial.readString();
+    angle = angleStr.toInt();
+    Serial.print("Current Angle: ");
+    Serial.print(angle);
+    //fr.moveLeg(angle, 90 , 90);
+    Serial.print("| Hip (Rotate) Angle: ");
+    //Serial.print(fr.getHipRotate().read());
+    Serial.print("| Hip (Lift) Angle: ");
+    //Serial.print(fr.getHipLift().read());
+    Serial.print("| Knee Angle: ");
+    //Serial.println(fr.getKnee().read());
+    angle = 0;
+  }
+}
+
+void attachServos() {
+  robot.getFr() = Leg(FR_ROTATE_PIN, FR_LIFT_PIN, FR_KNEE_PIN, false);
+  delay(10);
+  robot.getMr() = Leg(MR_ROTATE_PIN, MR_LIFT_PIN, MR_KNEE_PIN, false);
+  delay(10);
+  robot.getBr() = Leg(BR_ROTATE_PIN, BR_LIFT_PIN, BR_KNEE_PIN, false);
+  delay(10);
+  robot.getFl() = Leg(FL_ROTATE_PIN, FL_LIFT_PIN, FL_KNEE_PIN, true);
+  delay(10);
+  robot.getMl() = Leg(ML_ROTATE_PIN, ML_LIFT_PIN, ML_KNEE_PIN, true);
+  delay(10);
+  robot.getBl() = Leg(BL_ROTATE_PIN, BL_LIFT_PIN, BL_KNEE_PIN, true);
+  delay(10);
+}
+/*
 void attachServos() {
   // ===> LEGS:
   //Setup the Front right legs
-  frontRight.rotate.attach(FR_ROTATE_PIN);
+  robot.getFr().getHipRotate().attach(FR_ROTATE_PIN);
   frontRight.lift.attach(FR_LIFT_PIN);
   frontRight.knee.attach(FR_KNEE_PIN);
 
@@ -238,6 +197,7 @@ void updateLeg(Leg *leg, Leg *newLeg) {
   leg->kneeAngle = newLeg->kneeAngle;
   delay(SERVO_WRITE_DELAY);
 }
+*/
 void getBalanceData() {
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
   //ax = map(ax, -17000, 17000, 0, 255 ); // X axis data
