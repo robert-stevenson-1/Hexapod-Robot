@@ -12,56 +12,56 @@
 // ======================
 
 // === LEG SERVO INTIAL ANGLES ===
-#define FR_ROTATE_INIT_ANGLE 0
-#define FR_LIFT_INIT_ANGLE 0
-#define FR_KNEE_INIT_ANGLE 0
+#define FR_ROTATE_INIT_ANGLE 90
+#define FR_LIFT_INIT_ANGLE 125
+#define FR_KNEE_INIT_ANGLE 110
 
-#define MR_ROTATE_INIT_ANGLE 0
-#define MR_LIFT_INIT_ANGLE 0
-#define MR_KNEE_INIT_ANGLE 0
+#define MR_ROTATE_INIT_ANGLE 90
+#define MR_LIFT_INIT_ANGLE 125
+#define MR_KNEE_INIT_ANGLE 110
 
-#define BR_ROTATE_INIT_ANGLE 0
-#define BR_LIFT_INIT_ANGLE 0
-#define BR_KNEE_INIT_ANGLE 0
+#define BR_ROTATE_INIT_ANGLE 90
+#define BR_LIFT_INIT_ANGLE 125
+#define BR_KNEE_INIT_ANGLE 110
 
-#define FL_ROTATE_INIT_ANGLE 0
-#define FL_LIFT_INIT_ANGLE 0
-#define FL_KNEE_INIT_ANGLE 0
+#define FL_ROTATE_INIT_ANGLE 90
+#define FL_LIFT_INIT_ANGLE 55
+#define FL_KNEE_INIT_ANGLE 70
 
-#define ML_ROTATE_INIT_ANGLE 0
-#define ML_LIFT_INIT_ANGLE 0
-#define ML_KNEE_INIT_ANGLE 0
+#define ML_ROTATE_INIT_ANGLE 90
+#define ML_LIFT_INIT_ANGLE 55
+#define ML_KNEE_INIT_ANGLE 70
 
-#define BL_ROTATE_INIT_ANGLE 0
-#define BL_LIFT_INIT_ANGLE 0
-#define BL_KNEE_INIT_ANGLE 0
+#define BL_ROTATE_INIT_ANGLE 90
+#define BL_LIFT_INIT_ANGLE 55
+#define BL_KNEE_INIT_ANGLE 70
 
 // ===============================
 
 // === LEG SERVO PINS ===
-#define FR_ROTATE_PIN 22
-#define FR_LIFT_PIN 23
-#define FR_KNEE_PIN 24
+#define FL_ROTATE_PIN 22
+#define FL_LIFT_PIN 24
+#define FL_KNEE_PIN 23
 
-#define MR_ROTATE_PIN 25
-#define MR_LIFT_PIN 26
-#define MR_KNEE_PIN 27
+#define ML_ROTATE_PIN 25
+#define ML_LIFT_PIN 26
+#define ML_KNEE_PIN 27
 
-#define BR_ROTATE_PIN 28
-#define BR_LIFT_PIN 29
-#define BR_KNEE_PIN 30
+#define BL_ROTATE_PIN 28
+#define BL_LIFT_PIN 29
+#define BL_KNEE_PIN 30
 
-#define FL_ROTATE_PIN 31
-#define FL_LIFT_PIN 32
-#define FL_KNEE_PIN 33
+#define FR_ROTATE_PIN 31
+#define FR_LIFT_PIN 32
+#define FR_KNEE_PIN 33
 
-#define ML_ROTATE_PIN 34
-#define ML_LIFT_PIN 35
-#define ML_KNEE_PIN 36
+#define MR_ROTATE_PIN 34
+#define MR_LIFT_PIN 35
+#define MR_KNEE_PIN 36
 
-#define BL_ROTATE_PIN 37
-#define BL_LIFT_PIN 38
-#define BL_KNEE_PIN 39
+#define BR_ROTATE_PIN 37
+#define BR_LIFT_PIN 38
+#define BR_KNEE_PIN 39
 
 // ======================
 
@@ -123,16 +123,21 @@ void setup() {
 
   // === ATTACH SERVOS ==
   attachServos();
+  delay(100);
   // ====================
 
   // === SET LEGS TO INITIAL ANGLES ===
 
   legSetAngles(&frontRight, FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
+  delay(20);
   legSetAngles(&middleRight, MR_ROTATE_INIT_ANGLE, MR_LIFT_INIT_ANGLE, MR_KNEE_INIT_ANGLE);
+  delay(20);
   legSetAngles(&backRight, BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
-
+  delay(20);
   legSetAngles(&frontLeft, FL_ROTATE_INIT_ANGLE, FL_LIFT_INIT_ANGLE, FL_KNEE_INIT_ANGLE);
+  delay(20);
   legSetAngles(&middleLeft, ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
+  delay(20);
   legSetAngles(&backLeft, BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
 
   // ==================================
@@ -149,17 +154,16 @@ void loop() {
 
   //get balance data
   getBalanceData();
-  /* mpu print data
+  // mpu print data
     Serial.print(mpu.getAccelerationX());
     Serial.print(" ");
     Serial.println(mpu.getAccelerationY());
-  */
   //get new angles from input data (from ROS)
   
   
   //set the new leg angles
 
-  legSetAngles(&middleRight, middleRight.rotateAngle, middleRight.liftAngle, middleRight.kneeAngle + 10);
+  //legSetAngles(&middleRight, middleRight.rotateAngle, middleRight.liftAngle, middleRight.kneeAngle);
   
   //send data
 
