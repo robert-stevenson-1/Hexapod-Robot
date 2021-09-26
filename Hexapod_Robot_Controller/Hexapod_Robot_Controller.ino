@@ -30,7 +30,8 @@ void setup() {
   //serial monitor
   Serial.begin(9600);
 
-  robot = Robot();
+  //robot = Robot();
+  //fr = Leg(FL_ROTATE_PIN, FL_LIFT_PIN, FL_KNEE_PIN, true);
   
   //Setup the ultrasonic sensor
   HCSR04.begin(TRIG_PIN, ECHO_PIN);
@@ -46,7 +47,7 @@ void setup() {
 
   // === SET LEGS TO INITIAL ANGLES ===
 
-  //fr.moveLeg(0, 0 , 0);
+  //fr.moveLeg(90, 90, 90);
   robot.updateLeg(&robot.getFr(), FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
   delay(20);
   robot.updateLeg(&robot.getMr(), MR_ROTATE_INIT_ANGLE, MR_LIFT_INIT_ANGLE, MR_KNEE_INIT_ANGLE);
@@ -68,10 +69,11 @@ void setup() {
 }
 
 void loop() {
+  #ifdef NORMAL
   // put your main code here, to run repeatedly:
   distance = *(HCSR04.measureDistanceCm());
 
-  Serial.println(robot.getBl().getHipRotate().attached());
+  //Serial.println(robot.getBl().getHipRotate().attached());
   //get balance data
   //getBalanceData();
   // mpu print data
@@ -87,12 +89,122 @@ void loop() {
     Serial.print(mpu.getRotationZ());
     Serial.print(" ");
         */
-  //set the new leg angles
-  
+  //--rotate on the spot--
+
+  rotate(25, 30, 100);
+  delay(1000);
+
   
   //send data
 
   delay(100);
+  #endif
+}
+
+void rotate(int rotVal, int liftVal, int delVal){
+    
+  //==First 3
+  //Move FL up
+  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle() + liftVal, robot.getFl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle() + liftVal);
+  delay(delVal);
+
+  //Move BL up
+  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle() + liftVal, robot.getBl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle() + liftVal);
+  delay(delVal);
+
+  //Move MR up
+  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle() + liftVal, robot.getMr().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle() + liftVal);
+  delay(delVal);
+
+  //FL to the right and down
+  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle() - rotVal, robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle() - liftVal);
+  delay(delVal);
+  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle() - liftVal, robot.getFl().getKneeAngle());
+  delay(delVal);
+
+  //BL to the right and down
+  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle() - rotVal, robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle() - liftVal);
+  delay(delVal);
+  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle() - liftVal, robot.getBl().getKneeAngle());
+  delay(delVal);
+
+  //MR to the right and down
+  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle() - rotVal, robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle() - liftVal);
+  delay(delVal);
+  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle() - liftVal, robot.getMr().getKneeAngle());
+  delay(delVal);
+
+  //==second 3
+
+  //Move FR up
+  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle() + liftVal, robot.getFr().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle() + liftVal);
+  delay(delVal);
+
+  //Move BR up
+  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle() + liftVal, robot.getBr().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle() + liftVal);
+  delay(delVal);
+
+  //Move ML up
+  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle() + liftVal, robot.getMl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle() + liftVal);
+  delay(delVal);
+
+  //FR to the right and down
+  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle() - rotVal, robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle() - liftVal);
+  delay(delVal);
+  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle() - liftVal, robot.getFr().getKneeAngle());
+  delay(delVal);
+
+  //BR to the right and down
+  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle() - rotVal, robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle() - liftVal);
+  delay(delVal);
+  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle() - liftVal, robot.getBr().getKneeAngle());
+  delay(delVal);
+
+  //ML to the right and down
+  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle() - rotVal, robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle() - liftVal);
+  delay(delVal);
+  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle() - liftVal, robot.getMl().getKneeAngle());
+  delay(delVal);
+
+  //==Center the hip servos
+  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle()+ rotVal, robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle()+ rotVal, robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle());
+  delay(delVal);
+  
+  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle() + rotVal, robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle() + rotVal, robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle());
+  delay(delVal);
+    
+  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle()+ rotVal, robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle());
+  delay(delVal);
+  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle()+ rotVal, robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle());
+  delay(delVal); 
 }
 
 void serialMonitorTest(){
@@ -101,6 +213,28 @@ void serialMonitorTest(){
   if(Serial.available() > 0){
     angleStr = Serial.readString();
     angle = angleStr.toInt();
+    Serial.print("Current Angle: ");
+    Serial.print(angle);
+    //fr.moveLeg(angle, 90 , 90);
+    Serial.print("| Hip (Rotate) Angle: ");
+    //Serial.print(fr.getHipRotate().read());
+    Serial.print("| Hip (Lift) Angle: ");
+    //Serial.print(fr.getHipLift().read());
+    Serial.print("| Knee Angle: ");
+    //Serial.println(fr.getKnee().read());
+    angle = 0;
+  }
+}
+
+
+void serialMonitorLegControl(){
+  String cmd[3] = {"","",""};
+  int angle = 90;
+  if(Serial.available() > 0){
+    cmd[0] = Serial.readStringUntil(' ');
+    cmd[0] = Serial.readStringUntil(' ');
+    cmd[0] = Serial.readStringUntil('\n');
+    angle = cmd[2].toInt();
     Serial.print("Current Angle: ");
     Serial.print(angle);
     //fr.moveLeg(angle, 90 , 90);
@@ -128,6 +262,8 @@ void attachServos() {
   robot.getBl() = Leg(BL_ROTATE_PIN, BL_LIFT_PIN, BL_KNEE_PIN, true);
   delay(10);
 }
+
+
 /*
 void attachServos() {
   // ===> LEGS:
