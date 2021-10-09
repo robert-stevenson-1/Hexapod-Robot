@@ -2,13 +2,13 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
 #
-/3D Hexapod Simulator/[Ll]ibrary/
-/3D Hexapod Simulator/[Tt]emp/
-/3D Hexapod Simulator/[Oo]bj/
-/3D Hexapod Simulator/[Bb]uild/
-/3D Hexapod Simulator/[Bb]uilds/
-/3D Hexapod Simulator/[Ll]ogs/
-/3D Hexapod Simulator/[Uu]ser[Ss]ettings/
+/3D Hexapod Simulator/Hexapod Simulator/[Ll]ibrary/
+/3D Hexapod Simulator/Hexapod Simulator/[Tt]emp/
+/3D Hexapod Simulator/Hexapod Simulator/[Oo]bj/
+/3D Hexapod Simulator/Hexapod Simulator/[Bb]uild/
+/3D Hexapod Simulator/Hexapod Simulator/[Bb]uilds/
+/3D Hexapod Simulator/Hexapod Simulator/[Ll]ogs/
+/3D Hexapod Simulator/Hexapod Simulator/[Uu]ser[Ss]ettings/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
