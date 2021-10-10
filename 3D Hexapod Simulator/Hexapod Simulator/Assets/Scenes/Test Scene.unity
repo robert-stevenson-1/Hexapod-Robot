@@ -1043,7 +1043,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8575255467464705566, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_Immovable
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8790055481205842793, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_AnchorRotation.w
