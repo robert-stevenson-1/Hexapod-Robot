@@ -21,7 +21,7 @@ private:
 
     bool isLeft;
 public:
-    Leg();
+    Leg(); //redundant?
     Leg(int hipRotateServoPin, int hipLiftServoPin, int kneeServoPin, bool isLeft);
     void moveLeg(int rotateAngle, int liftAngle, int kneeAngle);
     int getRotationAngle();

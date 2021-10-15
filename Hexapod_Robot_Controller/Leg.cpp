@@ -6,7 +6,7 @@
 #include "RobotConfig.h"
 #include <Arduino.h>
 
-Leg::Leg() {
+Leg::Leg() { 
     Leg::rotationAngle = hipRotate.read();
     Leg::liftAngle = hipLift.read();
     Leg::kneeAngle = knee.read();
