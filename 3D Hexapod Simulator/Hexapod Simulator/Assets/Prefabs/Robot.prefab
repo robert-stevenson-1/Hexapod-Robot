@@ -71,8 +71,9 @@ MonoBehaviour:
   rotationAngle: 0
   liftAngle: 0
   kneeAngle: 0
-  femurLength: 0
-  tibiaLength: 0
+  coxaOffset: 0.035
+  femurLength: 0.09
+  tibiaLength: 0.115
   isLeft: 0
 --- !u!64 &8575255467393324438
 MeshCollider:
@@ -409,8 +410,9 @@ MonoBehaviour:
   rotationAngle: 0
   liftAngle: 0
   kneeAngle: 0
-  femurLength: 0
-  tibiaLength: 0
+  coxaOffset: 0.035
+  femurLength: 0.09
+  tibiaLength: 0.115
   isLeft: 1
 --- !u!64 &8575255467293977416
 MeshCollider:
@@ -549,8 +551,9 @@ MonoBehaviour:
   rotationAngle: 0
   liftAngle: 0
   kneeAngle: 0
-  femurLength: 0
-  tibiaLength: 0
+  coxaOffset: 0.035
+  femurLength: 0.09
+  tibiaLength: 0.115
   isLeft: 0
 --- !u!64 &8575255467228978237
 MeshCollider:
@@ -689,8 +692,9 @@ MonoBehaviour:
   rotationAngle: 0
   liftAngle: 0
   kneeAngle: 0
-  femurLength: 0
-  tibiaLength: 0
+  coxaOffset: 0.035
+  femurLength: 0.09
+  tibiaLength: 0.115
   isLeft: 1
 --- !u!64 &8575255465446190698
 MeshCollider:
@@ -895,8 +899,9 @@ MonoBehaviour:
   rotationAngle: 0
   liftAngle: 0
   kneeAngle: 0
-  femurLength: 0
-  tibiaLength: 0
+  coxaOffset: 0.035
+  femurLength: 0.09
+  tibiaLength: 0.115
   isLeft: 0
 --- !u!64 &8575255466223105205
 MeshCollider:
@@ -1076,11 +1081,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   robot: {fileID: 1806491046965765148}
   nextTime: 0
+  sampleRate: 0
   data: 
   lastData: 
-  sampleRate: 0
   startUpDone: 0
   upTime: 0
+  lockLocation: 0
 --- !u!64 &8575255467464705565
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1369,8 +1375,9 @@ MonoBehaviour:
   rotationAngle: 0
   liftAngle: 0
   kneeAngle: 0
-  femurLength: 0
-  tibiaLength: 0
+  coxaOffset: 0.035
+  femurLength: 0.09
+  tibiaLength: 0.115
   isLeft: 1
 --- !u!1001 &8575255465562493125
 PrefabInstance:

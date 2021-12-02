@@ -11,13 +11,15 @@ public class Leg : MonoBehaviour
     public Transform legTip;
 
     [Header("Current Leg Joint angle")]
-    public int rotationAngle;
-    public int liftAngle;
-    public int kneeAngle;
+    public float rotationAngle;
+    public float liftAngle;
+    public float kneeAngle;
 
     [Header("Leg Parameters")]
-    public float femurLength;
-    public float tibiaLength;
+    // 1.0f == 1 meter
+    public float coxaOffset = 0.035f; //35mm
+    public float femurLength = 0.90f; //90mm
+    public float tibiaLength = 0.115f; //115mm
     [Space(5)]
     public bool isLeft = false;
 
@@ -28,8 +30,8 @@ public class Leg : MonoBehaviour
         liftAngle = ((int)(hipLift.zDrive).target);
         kneeAngle = ((int)(hipRotate.zDrive).target);
 
-        femurLength = Vector3.Distance(hipRotate.transform.position, knee.transform.position);
-        tibiaLength = Vector3.Distance(knee.transform.position, legTip.transform.position);
+        //femurLength = Vector3.Distance(hipRotate.transform.position, knee.transform.position);
+        //tibiaLength = Vector3.Distance(knee.transform.position, legTip.transform.position);
     }
     private void Update()
     {
@@ -55,7 +57,7 @@ public class Leg : MonoBehaviour
             kneeAngle = ((int)(hipRotate.zDrive).target);
         }*/
 
-    public void moveLeg(int rotateAngle, int liftAngle, int kneeAngle)
+    public void moveLeg(double rotateAngle, double liftAngle, double kneeAngle)
     {
         if (this.isLeft)
         {
@@ -77,33 +79,44 @@ public class Leg : MonoBehaviour
     }
 
     //Rotate the leg by setting the Hip rotation Angle
-    public void rotateLeg(int angle)
+    public void rotateLeg(double angle)
     {
-        //fetch the drive for the legs hip rotation
-        ArticulationDrive drive = hipRotate.yDrive;
-        drive.target = angle; //update the drives target to the desired angle
-        rotationAngle = angle;
-        hipRotate.yDrive = drive; //replace the legs drive in the hip used to rotate the leg
+        //check if we are in the correct bounds
+        if (angle >= 0 && angle < 180)
+        {
+            //fetch the drive for the legs hip rotation
+            ArticulationDrive drive = hipRotate.yDrive;
+            drive.target = (float)angle; //update the drives target to the desired angle
+            rotationAngle = (float)angle;
+            hipRotate.yDrive = drive; //replace the legs drive in the hip used to rotate the leg   
+        }
     }
 
     //Lift the leg by setting the Hip lift Angle
-    public void liftLeg(int angle)
+    public void liftLeg(double angle)
     {
-        //fetch the drive for the legs hip
-        ArticulationDrive drive = hipLift.zDrive;
-        drive.target = angle; //update the drives target to the desired angle
-        liftAngle = angle;
-        hipLift.zDrive = drive; //replace the legs drive in the hip used to lift the leg
-    }
-    
-    //Bend the leg's knee by setting the knee's Angle
-    public void bendKnee(int angle)
-    {
-        //fetch the drive for the knee
-        ArticulationDrive drive = knee.zDrive;
-        drive.target = angle; //update the drives target to the desired angle
-        kneeAngle = angle;
-        knee.zDrive = drive; //replace the legs drive in the knee used to bend the knee
+        //check if we are in the correct bounds
+        if (angle >= 0 && angle < 180)
+        {
+            //fetch the drive for the legs hip
+            ArticulationDrive drive = hipLift.zDrive;
+            drive.target = (float) angle; //update the drives target to the desired angle
+            liftAngle = (float) angle;
+            hipLift.zDrive = drive; //replace the legs drive in the hip used to lift the leg
+        }
     }
 
+    //Bend the leg's knee by setting the knee's Angle
+    public void bendKnee(double angle)
+    {
+        //check if we are in the correct bounds
+        if (angle >= 0 && angle < 180)
+        {
+            //fetch the drive for the knee
+            ArticulationDrive drive = knee.zDrive;
+            drive.target = (float) angle; //update the drives target to the desired angle
+            kneeAngle = (float) angle;
+            knee.zDrive = drive; //replace the legs drive in the knee used to bend the knee
+        }
+    }
 }

@@ -17,59 +17,59 @@ public class Robot : MonoBehaviour
         Vector3 frTipLoc = fr.legTip.position;
         Vector3 targetLoc = frTipLoc + new Vector3(0f, 0f, distance);
         Vector3 HipPivotLocation = fr.hipRotate.transform.position;
-        Vector3 diffVec = targetLoc - HipPivotLocation;
+        Vector3 diffVecTarget = targetLoc - HipPivotLocation;
 
         Debug.DrawLine(frTipLoc, targetLoc, Color.green, 600f);
         Debug.DrawLine(HipPivotLocation, targetLoc, Color.magenta, 600f);
-        Debug.DrawLine(HipPivotLocation, fr.hipLift.transform.position, Color.cyan, 600f);
-        Debug.DrawLine(fr.hipLift.transform.position, targetLoc, Color.blue, 600f);
+        //Debug.DrawLine(HipPivotLocation, fr.hipLift.transform.position, Color.cyan, 600f);
+        //Debug.DrawLine(fr.hipLift.transform.position, targetLoc, Color.blue, 600f);
 
-        double newHipAngle = 0f;
-        double newKneeAngle = 0f;
-        double newLiftAngle = 0f;
-        double legLengthTop = 0f;
-        double legLengthSide = 0f;
-        double baseToEffectorDist = 0;
+        double newHipAngle;
+        double newLiftAngle;
+        double newKneeAngle;
 
-        double l = Vector3.Distance(fr.hipLift.transform.position, targetLoc);
-        double coxaOffset = Vector3.Distance(fr.hipRotate.transform.position, fr.hipLift.transform.position);
+        //calculate the leg length 
+        double len1 = Math.Sqrt(Math.Pow(diffVecTarget.x, 2) + Math.Pow(diffVecTarget.z , 2));
+        double len1Real = Vector3.Distance(HipPivotLocation, targetLoc);
+        double len3 = len1 - fr.coxaOffset; 
+        double len2 = Math.Sqrt(Math.Pow(len3, 2) + Math.Pow(diffVecTarget.y, 2));
+        double len2Real = Vector3.Distance(fr.hipLift.transform.position, targetLoc);
 
-        //calculate the length of the leg with its foot at the new position (From the Lift Pivot of the hip)
-        //baseToEffectorDist = Math.Sqrt(Math.Pow(diffVec.x, 2) + Math.Pow(diffVec.z, 2));
+        //calculate assistive values for IK when getting the hip rotation angles
+        Vector3 diffVecStart = frTipLoc - HipPivotLocation;
+        double alpha4 = Math.Atan2(diffVecStart.z, diffVecStart.x) * 180 / Math.PI;
+        double alpha5 = 180 - (alpha4 + fr.rotationAngle);
 
-        //calculate the length of the leg with its foot at the new position (From the Lift Pivot of the hip)
-        //  (Must account of the offset from the hip rotation pivot to the hip lift pivot) 
-        legLengthTop = Math.Sqrt(Math.Pow(diffVec.x - fr.hipLift.transform.position.x, 2) + Math.Pow(diffVec.z - fr.hipLift.transform.position.z, 2));
-        legLengthSide = Math.Sqrt(Math.Pow(legLengthTop, 2) + Math.Pow(diffVec.y, 2));
-        //legLength = Math.Sqrt(Math.Pow(baseToEffectorDist - coxaOffset, 2) + Math.Pow(diffVec.z , 2));
-
-
-        //GRABBING HIP LIFT POSITION PROBABLY BAD, CAUSING DRIFT?
-
-
+        double alpha6 = Math.Atan2(diffVecTarget.z, diffVecTarget.x) * 180 / Math.PI; //value in degrees
 
 
         //calculate the hip rotation angle
         //  same as: 90 - Atan(Xd/Zd)
-        newHipAngle = Math.Atan2(diffVec.z, diffVec.x) * 180 / Math.PI; //value in degrees
+        newHipAngle = 180 - (alpha6 + alpha5);
 
         //calculate assistive values for IK when getting values for knee and lift angles
-        double alpha1 = Math.Acos(
-            (Math.Pow(fr.tibiaLength, 2) - (Math.Pow(legLengthSide, 2)) - Math.Pow(fr.femurLength, 2)) / 
-                (-2 * legLengthSide * fr.femurLength)
-            ) * 180 / Math.PI;//value in degrees
-        
+      
+
+        //double alpha1 = Math.Atan2(len3, diffVecTarget.y) * 180 / Math.PI; //value in degrees
+        double alpha1 = Math.Acos(Math.Abs(diffVecTarget.y)/len2) * 180 / Math.PI; //value in degrees
+
         double alpha2 = Math.Acos(
-            (Math.Pow(legLengthSide, 2) - Math.Pow(fr.femurLength, 2) - Math.Pow(fr.tibiaLength, 2)) /
-                (-2 * fr.tibiaLength * fr.femurLength)
-            ) * 180 / Math.PI; //value in degrees
+            (Math.Pow(fr.tibiaLength, 2) - Math.Pow(fr.femurLength, 2) - Math.Pow(len2, 2)) /
+            (-2 * fr.femurLength * len2)
+        ) * 180 / Math.PI; //value in degrees
 
-        double alpha3 = Math.Acos(diffVec.y / legLengthSide) * 180 / Math.PI; //value in degrees
+        double alpha3 = Math.Acos(
+            (Math.Pow(len2, 2) - (Math.Pow(fr.femurLength, 2)) - Math.Pow(fr.tibiaLength, 2)) / 
+                (-2 * fr.femurLength * fr.tibiaLength)
+            ) * 180 / Math.PI;//value in degrees
 
-        newLiftAngle = (alpha1 + alpha3);
+        newLiftAngle = alpha1 + alpha2;
 
-        newKneeAngle = 180 - alpha2;
+        newKneeAngle = 180 - alpha3;
 
+        
+        fr.moveLeg(newHipAngle, newLiftAngle, newKneeAngle);
+        
         Debug.Log("New Hip Rotation angle: " + newHipAngle +
                   "\nNew Hip Lift angle: " + newLiftAngle +
                   "\nNew Knee bend angle: " + newKneeAngle +
@@ -77,12 +77,14 @@ public class Robot : MonoBehaviour
                   "\nalpha2: " + alpha2 +
                   "\nalpha3: " + alpha3 +
                   "\nCurrent Vector Loc: " + frTipLoc.ToString("F5") +
-                  "\nDifference Vector: " + diffVec.ToString("F5") +
+                  "\nDifference Vector: " + diffVecTarget.ToString("F5") +
                   "\nTarget Vector Loc: " + targetLoc.ToString("F5") +
-                  "\nLeg Length Top: " + legLengthTop +
-                  "\nLeg Length Side: " + legLengthSide);
+                  "\nLen 1: " + len1 +
+                  "\nLen 2 (smart): " + Vector3.Distance(fr.hipLift.transform.position, targetLoc) +
+                  "\nLen 2: " + len2);
+        
+        Debug.DrawLine(HipPivotLocation, fr.legTip.position, Color.cyan, 600f);
 
-        fr.moveLeg((int)newHipAngle, (int)newLiftAngle, (int)newKneeAngle);
     }
 
     public void MoveBackwards(float distance)

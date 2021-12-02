@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   robot: {fileID: 1841759767}
-  movementDistance: 0.1
+  movementDistance: 0.05
 --- !u!4 &644374930
 Transform:
   m_ObjectHideFlags: 0
@@ -791,7 +791,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2096440156918678537, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: lockLocation
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2121190645133980148, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_SwingY
@@ -1278,6 +1278,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5518320141163861139, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
+      propertyPath: m_ZDrive.damping
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5518320141163861139, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_AnchorRotation.w
       value: -0.65328145
       objectReference: {fileID: 0}
@@ -1292,6 +1296,10 @@ PrefabInstance:
     - target: {fileID: 5518320141163861139, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_AnchorRotation.z
       value: 0.65328145
+      objectReference: {fileID: 0}
+    - target: {fileID: 5518320141163861139, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
+      propertyPath: m_ZDrive.stiffness
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 5518320141163861139, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_ZDrive.upperLimit
@@ -1358,6 +1366,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5841505825582684075, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
+      propertyPath: m_ZDrive.damping
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5841505825582684075, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_AnchorRotation.w
       value: 0.27059802
       objectReference: {fileID: 0}
@@ -1372,6 +1384,10 @@ PrefabInstance:
     - target: {fileID: 5841505825582684075, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_AnchorRotation.z
       value: -0.27059802
+      objectReference: {fileID: 0}
+    - target: {fileID: 5841505825582684075, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
+      propertyPath: m_ZDrive.stiffness
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 5841505825582684075, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_ZDrive.lowerLimit
@@ -1538,6 +1554,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7969732047357152523, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
+      propertyPath: m_YDrive.damping
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7969732047357152523, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_AnchorRotation.w
       value: -0.38268328
       objectReference: {fileID: 0}
@@ -1548,6 +1568,10 @@ PrefabInstance:
     - target: {fileID: 7969732047357152523, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_AnchorRotation.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7969732047357152523, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
+      propertyPath: m_YDrive.stiffness
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7969732047357152523, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_YDrive.upperLimit
@@ -1636,10 +1660,6 @@ PrefabInstance:
     - target: {fileID: 8575255466979913558, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_Name
       value: Robot (Container)
-      objectReference: {fileID: 0}
-    - target: {fileID: 8575255467464705566, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
-      propertyPath: m_Immovable
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8724513430951800532, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: legTip
