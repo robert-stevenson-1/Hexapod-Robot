@@ -1,23 +1,35 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using System.IO.Ports;
+
 
 public class RobotController : MonoBehaviour
 {
     [Header("Robot Assignment")]
     public Robot robot;
-    [Header("Robot Communication Setup")]
+
+    [Header("Robot Communication")] 
+    public String comPort = "COM4";
+    public int baudRate = 9600;
+    public int readTimeout = 200;
+    public int writeTimeout = 100;
     public SerialPort arduinoStream;
+    [Space(5)]
     public float nextTime;
     public float sampleRate;
     [Space(5)]
     public string data = "";
     public string lastData = "";
+    [Space(5)]
+    public bool canReceive = true;
+    public bool canTransmit = true;
 
     [Header("Debug")]
     public bool startUpDone;
     public float upTime;
     public bool lockLocation = false;
+
 
     // Start is called before the first frame update
     void Start()
@@ -25,8 +37,10 @@ public class RobotController : MonoBehaviour
         try
         {
             //setup the arduino com port
-            arduinoStream = new SerialPort("COM4", 9600);
+            arduinoStream = new SerialPort(comPort, baudRate);
             arduinoStream.ReadTimeout = 50;
+            arduinoStream.ReadBufferSize = 8192;
+            arduinoStream.WriteBufferSize = 256;
             arduinoStream.Open(); //open the serial com port
             nextTime = Time.time;
         }
@@ -52,23 +66,34 @@ public class RobotController : MonoBehaviour
 
         //counter initial startup launch force from intersecting parts on start up
         startUpDone = true;
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Time.time > nextTime)
+        if (arduinoStream.IsOpen)
         {
-            if (arduinoStream.IsOpen)
+            //check to see if we are allowed to send data to the robot
+            if (canTransmit)
             {
-                data = ReadRobot(100);
-            }
-            else
-            {
-                Debug.LogWarning("Port Not Open");
+                string toSend = getRobotData(robot);
+                sendRobot(toSend, writeTimeout);
+                canTransmit = false;
+                canReceive = true;
             }
 
-            nextTime = Time.time + sampleRate;
+            //check to see if we are allowed to read data from the robot
+            if (canReceive)
+            {
+                StartCoroutine(ReadRobot(200f));
+                canTransmit = true;
+                canReceive = false;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Port Not Open");
         }
 
         if (data != null && data != lastData)
@@ -91,17 +116,98 @@ public class RobotController : MonoBehaviour
         }
     }
 
-    string ReadRobot(int timeout = 0)
+    // string ReadRobot(int timeout = 1)
+    // {
+    //     //arduinoStream.ReadTimeout = timeout;
+    //     try
+    //     {
+    //         string value = arduinoStream.ReadLine();
+    //         return value;
+    //     }
+    //     catch (System.TimeoutException e)
+    //     {
+    //         print(e);
+    //         return null;
+    //     }
+    // }
+    public IEnumerator ReadRobot(float timeout = 10000f)
     {
-        arduinoStream.ReadTimeout = timeout;
+        DateTime initialTime = DateTime.Now;
+        DateTime nowTime;
+        TimeSpan diff = default(TimeSpan);
+        string value;
+        //arduinoStream.ReadTimeout = timeout;
+        do
+        {
+            try
+            {
+                value = arduinoStream.ReadLine();
+            }
+            catch (TimeoutException e)
+            {
+                value = "";
+                print(e);
+            }
+
+            if (value != "")
+            {
+                data = value;
+                yield break;
+            }
+
+            nowTime = DateTime.Now;
+            diff = nowTime - initialTime;
+        } while (diff.Milliseconds < timeout);
+    }
+
+    void sendRobot(string data, int timeout = 1)
+    {
+        //arduinoStream.WriteTimeout = timeout;
         try
         {
-            return arduinoStream.ReadLine();
+            Debug.Log("Sent: " + data);
+            arduinoStream.WriteLine(data);
+            arduinoStream.BaseStream.Flush();
         }
         catch (System.TimeoutException e)
         {
             print(e);
-            return null;
         }
+    }
+
+    string getRobotData(Robot robot)
+    {
+        string data = "";
+
+        data += " " + robot.fr.rotationAngle;
+        data += " " + robot.fr.liftAngle;
+        data += " " + robot.fr.kneeAngle;
+
+        data += " " + robot.mr.rotationAngle;
+        data += " " + robot.mr.liftAngle;
+        data += " " + robot.mr.kneeAngle;
+
+        data += " " + robot.br.rotationAngle;
+        data += " " + robot.br.liftAngle;
+        data += " " + robot.br.kneeAngle;
+
+        data += " " + robot.fr.rotationAngle;
+        data += " " + robot.fr.liftAngle;
+        data += " " + robot.fr.kneeAngle;
+
+        data += " " + robot.mr.rotationAngle;
+        data += " " + robot.mr.liftAngle;
+        data += " " + robot.mr.kneeAngle;
+
+        data += " " + robot.br.rotationAngle;
+        data += " " + robot.br.liftAngle;
+        data += " " + robot.br.kneeAngle;
+
+        return data;
+    }
+
+    public void disconnectCOM()
+    {
+        arduinoStream.Close();
     }
 }

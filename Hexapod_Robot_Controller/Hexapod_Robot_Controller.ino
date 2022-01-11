@@ -2,6 +2,7 @@
 #include <HCSR04.h>
 #include <Servo.h>
 #include "Robot.h"
+#include "RobotData.h"
 
 // ======================
 // ========STRUCT========
@@ -23,13 +24,15 @@ int16_t gx, gy, gz;
 Servo headRotate;
 Servo headLift;
 
+//Robot Structure and data
 Robot robot;
 //Leg fr;
+String data = "";
 
 void setup() {
   //serial monitor
   Serial.begin(9600);
-
+  Serial.flush();
   //robot = Robot();
   //fr = Leg(FL_ROTATE_PIN, FL_LIFT_PIN, FL_KNEE_PIN, true);
   
@@ -46,7 +49,7 @@ void setup() {
   // ====================
 
   // === SET LEGS TO INITIAL ANGLES ===
-
+/*
   //fr.moveLeg(90, 90, 90);
   robot.updateLeg(&robot.getFr(), FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
   delay(20);
@@ -59,19 +62,36 @@ void setup() {
   robot.updateLeg(&robot.getMl(), ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
   delay(20);
   robot.updateLeg(&robot.getBl(), BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
-
+*/
   // ==================================
-
-
 
   Serial.println("ax ay "); //az
   Serial.println("gx gy gz");
+
+  data = "";
 }
 
 void loop() {
   #ifdef NORMAL
+  
+  //send data
+  if(data != ""){
+    Serial.flush();
+    Serial.println(data);
+    data = "";
+  }
+  robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
+  delay(20);
+  //Read Data in
+  if(Serial.available() > 0){
+    Serial.flush();
+    data = "";
+    data = Serial.readString();
+    robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE-50);
+  }
+  delay(200);
   // put your main code here, to run repeatedly:
-  distance = *(HCSR04.measureDistanceCm());
+  //distance = *(HCSR04.measureDistanceCm());
 
   //Serial.println(robot.getBl().getHipRotate().attached());
   //get balance data
@@ -91,12 +111,9 @@ void loop() {
         */
   //--rotate on the spot--
 
-  rotate(25, 30, 100);
-  delay(1000);
-
+  //rotate(25, 30, 100);
+  //delay(1000);
   
-  //send data
-
   delay(100);
   #endif
 }

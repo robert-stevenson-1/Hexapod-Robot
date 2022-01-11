@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class UserController : MonoBehaviour
@@ -22,7 +20,7 @@ public class UserController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.W))
         {
-            Debug.Log("Robot Moving Foward");
+            Debug.Log("Robot Moving Forward");
             robot.MoveForward(movementDistance);
         }
 
@@ -32,15 +30,15 @@ public class UserController : MonoBehaviour
             robot.MoveBackwards(movementDistance);
         }
 
-        if (Input.GetKeyDown(KeyCode.A))
+        if (Input.GetKeyDown(KeyCode.A)) //TODO: right strafe
         {
-            Debug.Log("Robot Stafing Left");
+            Debug.Log("Robot Strafing Left");
             robot.StafeLeft(movementDistance);
         }
 
-        if (Input.GetKeyDown(KeyCode.D))
+        if (Input.GetKeyDown(KeyCode.D)) //TODO: right strafe
         {
-            Debug.Log("Robot Stafing Right");
+            Debug.Log("Robot Strafing Right");
             robot.StrafeRight(movementDistance);
         }
 

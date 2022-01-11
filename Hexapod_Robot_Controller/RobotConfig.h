@@ -14,8 +14,8 @@
 // ======================
 
 //MODE:
-#define MAINTENANCE
-//#define NORMAL
+//#define MAINTENANCE
+#define NORMAL
 
 #ifdef NORMAL
 // === LEG SERVO INTIAL ANGLES ===
