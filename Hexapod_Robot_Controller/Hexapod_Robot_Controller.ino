@@ -79,9 +79,11 @@ void loop() {
     Serial.flush();
     Serial.println(data);
     data = "";
+    robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
   }
-  robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
+
   delay(20);
+  
   //Read Data in
   if(Serial.available() > 0){
     Serial.flush();
@@ -89,7 +91,6 @@ void loop() {
     data = Serial.readString();
     robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE-50);
   }
-  delay(200);
   // put your main code here, to run repeatedly:
   //distance = *(HCSR04.measureDistanceCm());
 
