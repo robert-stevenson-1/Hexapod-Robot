@@ -197,18 +197,18 @@ void clearInputBuffer(){
 
 void getAnglesFromData(char* data, int* angles, const int arrSize,const char* delim){
 
-  Serial.println("Started Parsing");
+  //Serial.println("Started Parsing");
   int i = 0;
   
   char* d = strtok(data, delim);
   while (d != NULL) {
     angles[i] = atoi(d);
-    Serial.println (angles[i]);
+    //Serial.println (angles[i]);
     d = strtok(NULL, delim);
     i++;
   }
 
-  Serial.println("Done Parsing");
+  //Serial.println("Done Parsing");
 }
 
 

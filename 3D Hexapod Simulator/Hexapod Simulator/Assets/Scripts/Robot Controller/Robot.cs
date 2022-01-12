@@ -49,6 +49,7 @@ public class Robot : MonoBehaviour
         double alpha4 = Math.Atan2(diffVecStart.z, diffVecStart.x) * 180 / Math.PI;
         double alpha5 = 180 - (alpha4 + leg.rotationAngle);
 
+
         double alpha6 = Math.Atan2(diffVecTarget.z, diffVecTarget.x) * 180 / Math.PI; //value in degrees
 
 
@@ -78,7 +79,7 @@ public class Robot : MonoBehaviour
         {
             //calculate the hip rotation angle
             //  same as: 90 - Atan(Xd/Zd)
-            newHipAngle = -180 + (alpha6 + alpha5);
+            newHipAngle = 180 - (alpha6 + alpha5);
         }
         else
         {

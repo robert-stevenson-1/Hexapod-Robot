@@ -30,6 +30,8 @@ public class RobotController : MonoBehaviour
     public string lastData = "";
 
     [Space(5)]
+    public bool allowReceive = true;
+    public bool allowTransmit = true;
     public bool canReceive = true;
     public bool canTransmit = true;
 
@@ -121,7 +123,7 @@ public class RobotController : MonoBehaviour
             if (arduinoStream.IsOpen)
             {
                 //check to see if we are allowed to read data from the robot
-                if (canReceive)
+                if (canReceive && allowReceive)
                 {
                     //StartCoroutine(ReadRobot(200f));
                     data = ReadRobot(readTimeout);
@@ -131,7 +133,7 @@ public class RobotController : MonoBehaviour
 
 
                 //check to see if we are allowed to send data to the robot
-                if (canTransmit)
+                if (canTransmit && allowTransmit)
                 {
                     string toSend = getRobotData(robot);
                     sendRobot(toSend, writeTimeout);

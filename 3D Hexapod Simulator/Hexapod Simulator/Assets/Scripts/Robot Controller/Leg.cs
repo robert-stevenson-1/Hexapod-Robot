@@ -33,11 +33,6 @@ public class Leg : MonoBehaviour
         //femurLength = Vector3.Distance(hipRotate.transform.position, knee.transform.position);
         //tibiaLength = Vector3.Distance(knee.transform.position, legTip.transform.position);
     }
-    private void Update()
-    {
-
-    }
-
     /*   Leg()
        {
            rotationAngle = ((int)(hipRotate.yDrive).target);
