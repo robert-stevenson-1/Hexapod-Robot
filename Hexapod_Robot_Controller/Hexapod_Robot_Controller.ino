@@ -82,7 +82,27 @@ void loop() {
   
   //Read Data in
   getData();
-
+  
+  //after getting new data set the angles after parsing
+  if(newData == true){
+    //parse data to get angles
+    int angles[18];
+    getAnglesFromData(data, angles, 18, " ");
+//    for(int i = 0; i < 18; i++){
+//      Serial.println(angles[i]);
+//    }
+    robot.updateLeg(&robot.getFr(), angles[0], angles[1], angles[2]);
+    delay(20);
+    robot.updateLeg(&robot.getMr(), angles[3], angles[4], angles[5]);
+    delay(20);
+    robot.updateLeg(&robot.getBr(), angles[6], angles[7], angles[8]);
+    delay(20);
+    robot.updateLeg(&robot.getFl(), angles[9], angles[10], angles[11]);
+    delay(20);
+    robot.updateLeg(&robot.getMl(), angles[12], angles[13], angles[14]);
+    delay(20);
+    robot.updateLeg(&robot.getBl(), angles[15], angles[16], angles[17]);
+  }
   
   // put your main code here, to run repeatedly:
   //distance = *(HCSR04.measureDistanceCm());
@@ -108,16 +128,13 @@ void loop() {
   //rotate(25, 30, 100);
   //delay(1000);
 
-  //send data
+
+  //Reset fetched data
   if(newData == true){
-    Serial.println(data);
     newData = false;
-    delay(10);
-    //clearInputBuffer();
-    memset(data, 0, sizeof(data)); //clear the array
-    robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
+    memset(data, 0, sizeof(data)); //clear the arrayz
+    clearInputBuffer();
   }
-  //delay(200);
   #endif
 }
 
@@ -146,7 +163,7 @@ void getData() {
     char startCharMark = '<';
     char endCharMark = '>';
     char readChar;
- 
+
     while (Serial.available() > 0 && newData == false) {
         readChar = Serial.read();
 
@@ -177,6 +194,23 @@ void clearInputBuffer(){
     Serial.read();
   }
 }
+
+void getAnglesFromData(char* data, int* angles, const int arrSize,const char* delim){
+
+  Serial.println("Started Parsing");
+  int i = 0;
+  
+  char* d = strtok(data, delim);
+  while (d != NULL) {
+    angles[i] = atoi(d);
+    Serial.println (angles[i]);
+    d = strtok(NULL, delim);
+    i++;
+  }
+
+  Serial.println("Done Parsing");
+}
+
 
 void rotate(int rotVal, int liftVal, int delVal){
     

@@ -84,6 +84,7 @@ public class RobotController : MonoBehaviour
 
         //counter initial startup launch force from intersecting parts on start up
         startUpDone = true;
+        Debug.Log(getRobotData(robot));
 
     }
 
@@ -150,7 +151,7 @@ public class RobotController : MonoBehaviour
             }
             if (data != null && data != lastData || true)
             {
-                print("Data: " + data);
+                //print("Data: " + data);
                 lastData = data;
             }
         }
@@ -214,8 +215,8 @@ public class RobotController : MonoBehaviour
     {
         arduinoStream.WriteTimeout = timeout;
         try
-        {
-            Debug.Log("Sent: " + data);
+        { 
+            //Debug.Log("Sent: " + data);
             arduinoStream.WriteLine(data);
             arduinoStream.BaseStream.Flush();
         }

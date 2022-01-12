@@ -82,7 +82,7 @@ public class Leg : MonoBehaviour
     public void rotateLeg(double angle)
     {
         //check if we are in the correct bounds
-        if (angle >= 0 && angle < 180)
+        if (Mathf.Abs((float)angle) >= 0 && Mathf.Abs((float)angle) < 180)
         {
             //fetch the drive for the legs hip rotation
             ArticulationDrive drive = hipRotate.yDrive;

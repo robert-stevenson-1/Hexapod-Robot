@@ -1084,8 +1084,7 @@ MonoBehaviour:
   baudRate: 9600
   readTimeout: 200
   writeTimeout: 100
-  nextTime: 0
-  sampleRate: 0
+  ThreadDelay: 200
   data: 
   lastData: 
   canReceive: 1

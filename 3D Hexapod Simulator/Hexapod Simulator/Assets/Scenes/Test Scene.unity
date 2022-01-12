@@ -1055,10 +1055,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 707180486588824292, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
-      propertyPath: legTip
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 875728013389775555, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_SwingZ
       value: 1
@@ -1229,7 +1225,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2096440156918678537, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: ThreadDelay
-      value: 300
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 2096440156918678537, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: canTransmit
@@ -1237,7 +1233,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2096440156918678537, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: readTimeout
-      value: 5000
+      value: 12000
       objectReference: {fileID: 0}
     - target: {fileID: 2096440156918678537, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: lockLocation
@@ -1245,7 +1241,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2096440156918678537, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: writeTimeout
-      value: 300
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 2121190645133980148, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_SwingY
@@ -1413,7 +1409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2982485686509546489, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_ParentAnchorPosition.x
-      value: 0.00010606754
+      value: 0.00010606756
       objectReference: {fileID: 0}
     - target: {fileID: 2982485686509546489, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_ParentAnchorPosition.y
@@ -1565,7 +1561,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3904371901670054127, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_ParentAnchorPosition.x
-      value: 0.00015791686
+      value: 0.00018
       objectReference: {fileID: 0}
     - target: {fileID: 3904371901670054127, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_ParentAnchorPosition.y
@@ -1663,6 +1659,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 561548e820322824e831c03a34cfce1c, type: 2}
+    - target: {fileID: 4765998042215436897, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.00018
+      objectReference: {fileID: 0}
     - target: {fileID: 4768564446500977291, guid: 94c5969e75d955b49aaba005a0d101f2, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
