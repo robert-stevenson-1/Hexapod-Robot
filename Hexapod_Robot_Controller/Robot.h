@@ -7,6 +7,7 @@
 
 
 #include "Leg.h"
+
 #include "RobotConfig.h"
 
 class Robot {
@@ -27,6 +28,8 @@ public:
     Leg &getMl();
     Leg &getBr();
     Leg &getBl();
+
+    //void &getRobotAngles(char* data);
 
 };
 

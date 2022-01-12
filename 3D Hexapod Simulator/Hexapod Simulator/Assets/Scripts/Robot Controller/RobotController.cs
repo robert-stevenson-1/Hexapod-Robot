@@ -13,8 +13,9 @@ public class RobotController : MonoBehaviour
     [Header("Robot Communication")] 
     public String comPort = "COM4";
     public int baudRate = 9600;
-    public int readTimeout = 200;
-    public int writeTimeout = 100;
+    public int readTimeout = 10000;
+    public int writeTimeout = 200;
+    public int ThreadDelay = 200;
     public SerialPort arduinoStream;
 
     [Space(5)]
@@ -45,9 +46,15 @@ public class RobotController : MonoBehaviour
         {
             //setup the arduino com port
             arduinoStream = new SerialPort(comPort, baudRate);
-            arduinoStream.ReadTimeout = 50;
+            arduinoStream.ReadTimeout = readTimeout;
+            arduinoStream.WriteTimeout = writeTimeout;
             arduinoStream.ReadBufferSize = 8192;
             arduinoStream.WriteBufferSize = 256;
+            arduinoStream.Parity = Parity.None;
+            arduinoStream.StopBits = StopBits.One;
+            arduinoStream.DataBits = 8;
+            arduinoStream.DtrEnable = true;
+            arduinoStream.Handshake = Handshake.None;
             arduinoStream.Open(); //open the serial com port
 
             //if the port is open then start the communication to the robot on a separate thread
@@ -99,22 +106,19 @@ public class RobotController : MonoBehaviour
         }
     }
 
-    public void talkToRobot()
+    private void OnApplicationQuit()
+    {
+    arduinoStream.Close();
+    ComThread.Abort();
+    }
+
+    public void talkToRobot() //Runs on a seperate thread
     {
         while (true)
         {
             Debug.Log("Comms Thread Running");
             if (arduinoStream.IsOpen)
             {
-                //check to see if we are allowed to send data to the robot
-                if (canTransmit)
-                {
-                    string toSend = getRobotData(robot);
-                    sendRobot(toSend, writeTimeout);
-                    canTransmit = false;
-                    canReceive = true;
-                }
-
                 //check to see if we are allowed to read data from the robot
                 if (canReceive)
                 {
@@ -123,6 +127,18 @@ public class RobotController : MonoBehaviour
                     canTransmit = true;
                     canReceive = false;
                 }
+
+
+                //check to see if we are allowed to send data to the robot
+                if (canTransmit)
+                {
+                    string toSend = getRobotData(robot);
+                    sendRobot(toSend, writeTimeout);
+                    canTransmit = false;
+                    canReceive = true;
+                }
+                Thread.Sleep(ThreadDelay);
+
             }
             else
             {
@@ -132,7 +148,7 @@ public class RobotController : MonoBehaviour
                 Debug.LogWarning("Killed ComThread");
 
             }
-            if (data != null && data != lastData)
+            if (data != null && data != lastData || true)
             {
                 print("Data: " + data);
                 lastData = data;
@@ -175,6 +191,7 @@ public class RobotController : MonoBehaviour
         arduinoStream.ReadTimeout = timeout;
         try
         {
+            arduinoStream.BaseStream.Flush();
             value = arduinoStream.ReadLine();
         }
         catch (TimeoutException e)
@@ -195,7 +212,7 @@ public class RobotController : MonoBehaviour
 
     void sendRobot(string data, int timeout = 1)
     {
-        //arduinoStream.WriteTimeout = timeout;
+        arduinoStream.WriteTimeout = timeout;
         try
         {
             Debug.Log("Sent: " + data);
@@ -212,29 +229,29 @@ public class RobotController : MonoBehaviour
     {
         string data = "";
 
-        data += " " + robot.fr.rotationAngle;
-        data += " " + robot.fr.liftAngle;
-        data += " " + robot.fr.kneeAngle;
-
-        data += " " + robot.mr.rotationAngle;
-        data += " " + robot.mr.liftAngle;
-        data += " " + robot.mr.kneeAngle;
-
-        data += " " + robot.br.rotationAngle;
-        data += " " + robot.br.liftAngle;
-        data += " " + robot.br.kneeAngle;
-
-        data += " " + robot.fr.rotationAngle;
-        data += " " + robot.fr.liftAngle;
-        data += " " + robot.fr.kneeAngle;
-
-        data += " " + robot.mr.rotationAngle;
-        data += " " + robot.mr.liftAngle;
-        data += " " + robot.mr.kneeAngle;
-
-        data += " " + robot.br.rotationAngle;
-        data += " " + robot.br.liftAngle;
-        data += " " + robot.br.kneeAngle;
+        data += "<" + (int)robot.fr.rotationAngle;
+        data += " " + (int)robot.fr.liftAngle;
+        data += " " + (int)robot.fr.kneeAngle;
+                  
+        data += " " + (int)robot.mr.rotationAngle;
+        data += " " + (int)robot.mr.liftAngle;
+        data += " " + (int)robot.mr.kneeAngle;
+                  
+        data += " " + (int)robot.br.rotationAngle;
+        data += " " + (int)robot.br.liftAngle;
+        data += " " + (int)robot.br.kneeAngle;
+                  
+        data += " " + (int)robot.fr.rotationAngle;
+        data += " " + (int)robot.fr.liftAngle;
+        data += " " + (int)robot.fr.kneeAngle;
+                  
+        data += " " + (int)robot.mr.rotationAngle;
+        data += " " + (int)robot.mr.liftAngle;
+        data += " " + (int)robot.mr.kneeAngle;
+                  
+        data += " " + (int)robot.br.rotationAngle;
+        data += " " + (int)robot.br.liftAngle;
+        data += " " + (int)robot.br.kneeAngle + ">" ;
 
         return data;
     }

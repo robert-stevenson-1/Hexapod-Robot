@@ -27,12 +27,18 @@ Servo headLift;
 //Robot Structure and data
 Robot robot;
 //Leg fr;
-String data = "";
+const byte maxData = 128;
+char data[maxData];
+char outboundData[maxData];
+bool newData = false;
+
 
 void setup() {
   //serial monitor
   Serial.begin(9600);
   Serial.flush();
+  Serial.setTimeout(1000);
+
   //robot = Robot();
   //fr = Leg(FL_ROTATE_PIN, FL_LIFT_PIN, FL_KNEE_PIN, true);
   
@@ -67,30 +73,17 @@ void setup() {
 
   Serial.println("ax ay "); //az
   Serial.println("gx gy gz");
-
-  data = "";
+  clearInputBuffer();
 }
 
 void loop() {
   #ifdef NORMAL
-  
-  //send data
-  if(data != ""){
-    Serial.flush();
-    Serial.println(data);
-    data = "";
-    robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
-  }
-
-  delay(20);
+  //Serial.flush();
   
   //Read Data in
-  if(Serial.available() > 0){
-    Serial.flush();
-    data = "";
-    data = Serial.readString();
-    robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE-50);
-  }
+  getData();
+
+  
   // put your main code here, to run repeatedly:
   //distance = *(HCSR04.measureDistanceCm());
 
@@ -114,9 +107,75 @@ void loop() {
 
   //rotate(25, 30, 100);
   //delay(1000);
-  
-  delay(100);
+
+  //send data
+  if(newData == true){
+    Serial.println(data);
+    newData = false;
+    delay(10);
+    //clearInputBuffer();
+    memset(data, 0, sizeof(data)); //clear the array
+    robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
+  }
+  //delay(200);
   #endif
+}
+
+//void getData(){
+//  char in;
+//  int count = 0;
+//  while(Serial.available() > 0 && newData == false){
+//    in = Serial.read();
+//    if(in != '\n'){
+//      data[count] = in;
+//      count++;
+//      
+//    }else{
+//      data[count] = '\0';
+//      newData = true;
+//    }
+//  }
+//  Serial.flush();
+//  robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE-50);
+//  delay(100);
+//}
+
+void getData() {
+    static boolean readingInProgress = false;
+    static byte ndx = 0;
+    char startCharMark = '<';
+    char endCharMark = '>';
+    char readChar;
+ 
+    while (Serial.available() > 0 && newData == false) {
+        readChar = Serial.read();
+
+        if (readingInProgress == true) {
+            if (readChar != endCharMark) {
+                data[ndx] = readChar;
+                ndx++;
+                if (ndx >= maxData) {
+                    ndx = maxData - 1;
+                }
+            }
+            else {
+                data[ndx] = '\0'; // terminate the string
+                readingInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (readChar == startCharMark) {
+            readingInProgress = true;
+        }
+    }
+}
+
+void clearInputBuffer(){
+  while (Serial.available() > 0) {
+    Serial.read();
+  }
 }
 
 void rotate(int rotVal, int liftVal, int delVal){
@@ -352,6 +411,7 @@ void updateLeg(Leg *leg, Leg *newLeg) {
   delay(SERVO_WRITE_DELAY);
 }
 */
+
 void getBalanceData() {
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
   //ax = map(ax, -17000, 17000, 0, 255 ); // X axis data

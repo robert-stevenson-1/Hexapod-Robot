@@ -42,3 +42,12 @@ Leg &Robot::getBr() {
 Leg &Robot::getBl() {
     return bl;
 }
+
+//void &getRobotAngles(char* data){
+//  data = fr.getRotationAngle() + ' ' + fr.getLiftAngle() + ' ' + fr.getKneeAngle() + ' ' +
+//  mr.getRotationAngle() + ' ' + mr.getLiftAngle() + ' ' + mr.getKneeAngle() + ' ' +
+//  br.getRotationAngle() + ' ' + br.getLiftAngle() + ' ' + br.getKneeAngle() + ' ' +
+//  fl.getRotationAngle() + ' ' + fl.getLiftAngle() + ' ' + fl.getKneeAngle() + ' ' +
+//  ml.getRotationAngle() + ' ' + ml.getLiftAngle() + ' ' + ml.getKneeAngle() + ' ' +
+//  bl.getRotationAngle() + ' ' + bl.getLiftAngle() + ' ' + bl.getKneeAngle() + '\0';
+//}
