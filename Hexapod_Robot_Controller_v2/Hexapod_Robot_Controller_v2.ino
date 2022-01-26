@@ -1,8 +1,11 @@
 #include <MPU6050.h>
 #include <HCSR04.h>
-#include <Servo.h>
-#include "Robot.h"
-#include "RobotData.h"
+#include <math.h>
+//#include <Servo.h>
+//#include "Robot.h"
+#include "LegStruct.h"
+#include "RobotConfig.h"
+
 
 // ======================
 // ========STRUCT========
@@ -25,14 +28,23 @@ Servo headRotate;
 Servo headLift;
 
 //Robot Structure and data
-Robot robot;
-//Leg fr;
+//Robot robot;
+leg fr;
+leg fl;
+leg mr;
+leg ml;
+leg br;
+leg bl;
+
+//Comm Data
 const byte maxData = 128;
 char data[maxData];
 char outboundData[maxData];
 bool newData = false;
 
-
+//test vars
+int a = 0;
+bool up = true;
 void setup() {
   //serial monitor
   Serial.begin(9600);
@@ -56,19 +68,50 @@ void setup() {
 
   // === SET LEGS TO INITIAL ANGLES ===
 
+  #ifdef NORMAL
   //fr.moveLeg(90, 90, 90);
-  robot.updateLeg(&fr, FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
+  moveLeg(&fr, FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
   delay(20);
-  robot.updateLeg(&mr, MR_ROTATE_INIT_ANGLE, MR_LIFT_INIT_ANGLE, MR_KNEE_INIT_ANGLE);
+  moveLeg(&mr, MR_ROTATE_INIT_ANGLE, MR_LIFT_INIT_ANGLE, MR_KNEE_INIT_ANGLE);
   delay(20);
-  robot.updateLeg(&br, BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
+  moveLeg(&br, BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
   delay(20);
-  robot.updateLeg(&fl, FL_ROTATE_INIT_ANGLE, FL_LIFT_INIT_ANGLE, FL_KNEE_INIT_ANGLE);
+  moveLeg(&fl, FL_ROTATE_INIT_ANGLE, FL_LIFT_INIT_ANGLE, FL_KNEE_INIT_ANGLE);
   delay(20);
-  robot.updateLeg(&ml, ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
+  moveLeg(&ml, ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
   delay(20);
-  robot.updateLeg(&bl), BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
+  moveLeg(&bl, BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
+  #endif
+  
+  #ifdef MAINTENANCE
+  moveLeg(&fr, FR_ROTATE_INIT_ANGLE, FR_LIFT_INIT_ANGLE, FR_KNEE_INIT_ANGLE);
+  delay(20);
+  moveLeg(&mr, MR_ROTATE_INIT_ANGLE, MR_LIFT_INIT_ANGLE, MR_KNEE_INIT_ANGLE);
+  delay(20);
+  moveLeg(&br, BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE);
+  delay(20);
+  moveLeg(&fl, FL_ROTATE_INIT_ANGLE, FL_LIFT_INIT_ANGLE, FL_KNEE_INIT_ANGLE);
+  delay(20);
+  moveLeg(&ml, ML_ROTATE_INIT_ANGLE, ML_LIFT_INIT_ANGLE, ML_KNEE_INIT_ANGLE);
+  delay(20);
+  moveLeg(&bl, BL_ROTATE_INIT_ANGLE, BL_LIFT_INIT_ANGLE, BL_KNEE_INIT_ANGLE);
+  #endif
 
+  
+  #ifdef IK_MODE
+  //fr.moveLeg(90, 90, 90);
+  //moveLegIK(&fr, 0, 0, 0);
+  delay(20);
+  //moveLegIK(&mr, 0, 0, 0);
+  delay(20);
+  moveLegIK(&br, 0, 0, 0);
+  delay(20);
+  //moveLegIK(&fl, 0, 0, 0);
+  delay(20);
+  //moveLegIK(&ml, 0, 0, 0);
+  delay(20);
+  //moveLegIK(&bl, 0, 0, 0);
+  #endif
   // ==================================
 
   Serial.println("ax ay "); //az
@@ -77,7 +120,7 @@ void setup() {
 }
 
 void loop() {
-  #ifdef NORMAL
+  #ifdef IK_MODE//NORMAL
   //Serial.flush();
   
   //Read Data in
@@ -89,22 +132,51 @@ void loop() {
     Serial.println(data);
     
     //parse data to get angles
-    int angles[18];
+    float angles[18];
     getAnglesFromData(data, angles, 18, " ");
-//    for(int i = 0; i < 18; i++){
-//      Serial.println(angles[i]);
-//    }
-    robot.updateLeg(&robot.getFr(), angles[0], angles[1], angles[2]);
-    delay(20);
-    robot.updateLeg(&robot.getMr(), angles[3], angles[4], angles[5]);
-    delay(20);
-    robot.updateLeg(&robot.getBr(), angles[6], angles[7], angles[8]);
-    delay(20);
-    robot.updateLeg(&robot.getFl(), angles[9], angles[10], angles[11]);
-    delay(20);
-    robot.updateLeg(&robot.getMl(), angles[12], angles[13], angles[14]);
-    delay(20);
-    robot.updateLeg(&robot.getBl(), angles[15], angles[16], angles[17]);
+    for(int i = 0; i < 17; i++){
+      Serial.print(angles[i]);
+      Serial.print(" ");
+    }
+    Serial.println(angles[17]);
+
+    moveLegIK(&fr, angles[0], angles[1], angles[2]);
+    moveLegIK(&mr, angles[0], angles[1], angles[2]);
+    moveLegIK(&br, angles[0], angles[1], angles[2]);
+    moveLegIK(&fl, angles[0], angles[1], angles[2]);
+    moveLegIK(&ml, angles[0], angles[1], angles[2]);
+    moveLegIK(&bl, angles[0], angles[1], angles[2]);
+
+//    moveLeg(&fr, angles[0], angles[1], angles[2]);
+//    delay(20);
+//    moveLeg(&mr, angles[3], angles[4], angles[5]);
+//    delay(20);
+//    moveLeg(&br, angles[6], angles[7], angles[8]);
+//    delay(20);
+//    moveLeg(&fl, angles[9], angles[10], angles[11]);
+//    delay(20);
+//    moveLeg(&ml, angles[12], angles[13], angles[14]);
+//    delay(20);
+//    moveLeg(&bl, angles[15], angles[16], angles[17]);
+
+  delay(4000);
+  
+  }else{
+
+     if(up){
+      if(a >= 50){
+        up = false;
+      }
+      moveLegIK(&br, 0, a, 0);
+      a += 5;
+     }else{
+      if(a <= -30){
+        up = true;
+      }
+      moveLegIK(&br, 0, a, 0);
+      a -= 5;
+     }
+     //delay (10);
   }
   
   // put your main code here, to run repeatedly:
@@ -126,11 +198,6 @@ void loop() {
     Serial.print(mpu.getRotationZ());
     Serial.print(" ");
         */
-  //--rotate on the spot--
-
-  //rotate(25, 30, 100);
-  //delay(1000);
-
 
   //Reset fetched data
   if(newData == true){
@@ -138,27 +205,8 @@ void loop() {
     memset(data, 0, sizeof(data)); //clear the arrayz
     clearInputBuffer();
   }
-  #endif
+  #endif 
 }
-
-//void getData(){
-//  char in;
-//  int count = 0;
-//  while(Serial.available() > 0 && newData == false){
-//    in = Serial.read();
-//    if(in != '\n'){
-//      data[count] = in;
-//      count++;
-//      
-//    }else{
-//      data[count] = '\0';
-//      newData = true;
-//    }
-//  }
-//  Serial.flush();
-//  robot.updateLeg(&robot.getBr(), BR_ROTATE_INIT_ANGLE, BR_LIFT_INIT_ANGLE, BR_KNEE_INIT_ANGLE-50);
-//  delay(100);
-//}
 
 void getData() {
     static boolean readingInProgress = false;
@@ -198,7 +246,7 @@ void clearInputBuffer(){
   }
 }
 
-void getAnglesFromData(char* data, int* angles, const int arrSize,const char* delim){
+void getAnglesFromData(char* data, float* angles, const int arrSize,const char* delim){
 
   //Serial.println("Started Parsing");
   int i = 0;
@@ -214,6 +262,7 @@ void getAnglesFromData(char* data, int* angles, const int arrSize,const char* de
   //Serial.println("Done Parsing");
 }
 
+/*
 void rotate(int rotVal, int liftVal, int delVal){
     
   //==First 3
@@ -359,20 +408,162 @@ void serialMonitorLegControl(){
     angle = 0;
   }
 }
-
+*/
 void attachServos() {
-  robot.getFr() = Leg(FR_ROTATE_PIN, FR_LIFT_PIN, FR_KNEE_PIN, false);
-  delay(10);
-  robot.getMr() = Leg(MR_ROTATE_PIN, MR_LIFT_PIN, MR_KNEE_PIN, false);
-  delay(10);
-  robot.getBr() = Leg(BR_ROTATE_PIN, BR_LIFT_PIN, BR_KNEE_PIN, false);
-  delay(10);
-  robot.getFl() = Leg(FL_ROTATE_PIN, FL_LIFT_PIN, FL_KNEE_PIN, true);
-  delay(10);
-  robot.getMl() = Leg(ML_ROTATE_PIN, ML_LIFT_PIN, ML_KNEE_PIN, true);
-  delay(10);
-  robot.getBl() = Leg(BL_ROTATE_PIN, BL_LIFT_PIN, BL_KNEE_PIN, true);
-  delay(10);
+  //Right Side
+  
+  //Setup the the Front Right leg
+  fr.hipRotate.attach(FR_ROTATE_PIN);
+  fr.hipLift.attach(FR_LIFT_PIN);
+  fr.knee.attach(FR_KNEE_PIN);
+  fr.isLeft = false;
+  fr.feetPos_X = FR_X;
+  fr.feetPos_Y = FR_Y;
+  fr.feetPos_Z = FR_Z;
+  //delay(20);
+  //Setup the the Middle Right leg
+  mr.hipRotate.attach(MR_ROTATE_PIN);
+  mr.hipLift.attach(MR_LIFT_PIN);
+  mr.knee.attach(MR_KNEE_PIN);
+  mr.isLeft = false;
+  mr.feetPos_X = MR_X;
+  mr.feetPos_Y = MR_Y;
+  mr.feetPos_Z = MR_Z;
+  //delay(20);
+  //Setup the the Back Right leg
+  br.hipRotate.attach(BR_ROTATE_PIN);
+  br.hipLift.attach(BR_LIFT_PIN);
+  br.knee.attach(BR_KNEE_PIN);
+  br.isLeft = false;
+  br.feetPos_X = BR_X;
+  br.feetPos_Y = BR_Y;
+  br.feetPos_Z = BR_Z;
+  //delay(20);
+
+  //Left Side
+  
+  //Setup the the Front Left leg
+  fl.hipRotate.attach(FL_ROTATE_PIN);
+  fl.hipLift.attach(FL_LIFT_PIN);
+  fl.knee.attach(FL_KNEE_PIN);
+  fl.isLeft = true;
+  fl.feetPos_X = FL_X;
+  fl.feetPos_Y = FL_Y;
+  fl.feetPos_Z = FL_Z;
+  delay(20);
+  //Setup the the Middle Left leg
+  ml.hipRotate.attach(ML_ROTATE_PIN);
+  ml.hipLift.attach(ML_LIFT_PIN);
+  ml.knee.attach(ML_KNEE_PIN);
+  ml.isLeft = true;
+  ml.feetPos_X = ML_X;
+  ml.feetPos_Y = ML_Y;
+  ml.feetPos_Z = ML_Z;
+  delay(20);
+  //Setup the the Back Left leg
+  bl.hipRotate.attach(BL_ROTATE_PIN);
+  bl.hipLift.attach(BL_LIFT_PIN);
+  bl.knee.attach(BL_KNEE_PIN);
+  bl.isLeft = true;
+  bl.feetPos_X = BL_X;
+  bl.feetPos_Y = BL_Y;
+  bl.feetPos_Z = BL_Z;
+  delay(20);
+}
+
+void moveLegIK(leg *leg, float x, float y, float z) {
+  
+
+
+  float newX = leg->feetPos_X + x;
+  float newY = leg->feetPos_Y + y;
+  float newZ = leg->feetPos_Z + z;
+  
+  Serial.print("x: ");
+  Serial.print(x);
+  Serial.print(" | y: ");
+  Serial.print(y);
+  Serial.print(" | z: ");
+  Serial.print(z);
+  Serial.print(" | newX: ");
+  Serial.print(newY);
+  Serial.print(" | newY: ");
+  Serial.print(newY);
+  Serial.print(" | newZ: ");
+  Serial.println(newZ);
+  
+  float yOff = 20 - y;
+  float L1 = sqrt(powf(newX, 2) + powf(newZ, 2));
+  float L2 = sqrt(powf((L1 - OFFSET_LENGTH), 2) + powf(newY, 2));
+
+  Serial.print("L1: ");
+  Serial.print(L1);
+  Serial.print(" L2: ");
+  Serial.println(L2);
+
+  
+  //check if the leg tip can reach that point
+  if(L2 > FEMUR_LENGTH + TIBIA_LENGTH){
+    Serial.println("Leg can't reach that far");
+    return;
+  }
+  
+  int hipAngle = 90 - (int)(atan(newZ/newX) * 180/PI);
+
+  float a1 = atan((L1 - OFFSET_LENGTH)/newY) * 180/PI;
+  float a2 = acos((powf(TIBIA_LENGTH, 2) - powf(L2, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * FEMUR_LENGTH * L2)) * 180/PI;
+  float a3 = acos((powf(L2, 2) - powf(TIBIA_LENGTH, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * TIBIA_LENGTH * FEMUR_LENGTH)) * 180/PI;
+
+  Serial.print("a1: ");
+  Serial.print(a1);
+  Serial.print(" | a2: ");
+  Serial.print(a2);
+  Serial.print(" | a3: ");
+  Serial.println(a3);
+ 
+  
+  int liftAngle = (int)(180 - (a1 + a2));
+  int kneeAngle = (int)(180 - a3);
+
+  Serial.print("hipAngle: ");
+  Serial.print(hipAngle);
+  Serial.print(" | liftAngle: ");
+  Serial.print(liftAngle);
+  Serial.print(" | kneeAngle: ");
+  Serial.println(kneeAngle);
+  
+  moveLeg(leg, hipAngle, liftAngle, kneeAngle);
+}
+
+void moveLeg(leg *leg, int rotateAngle, int liftAngle, int kneeAngle) {
+  if(leg->isLeft){
+    leg->hipLift.write(180-liftAngle);
+    delay(SERVO_WRITE_DELAY);
+    
+    leg->hipRotate.write(180-rotateAngle);
+    delay(SERVO_WRITE_DELAY);
+
+    leg->knee.write(180-kneeAngle);
+    delay(SERVO_WRITE_DELAY);
+  
+  } else {
+    leg->hipLift.write(liftAngle);
+    delay(SERVO_WRITE_DELAY);
+    
+    leg->hipRotate.write(rotateAngle);
+    delay(SERVO_WRITE_DELAY);
+    
+    leg->knee.write(kneeAngle);
+    delay(SERVO_WRITE_DELAY);
+  }
+  /*
+  leg.liftAngle = hipLift.read();
+  delay(SERVO_WRITE_DELAY);
+  leg.rotationAngle = hipRotate.read();
+  delay(SERVO_WRITE_DELAY);
+  leg.kneeAngle = knee.read();
+  delay(SERVO_WRITE_DELAY);
+  */
 }
 
 /*

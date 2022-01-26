@@ -21,7 +21,7 @@ public class UserController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.W))
         {
             Debug.Log("Robot Moving Forward");
-            robot.MoveForward(movementDistance);
+            StartCoroutine(robot.MoveForward(movementDistance));
         }
 
         if (Input.GetKeyDown(KeyCode.S))
@@ -33,13 +33,13 @@ public class UserController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.A)) //TODO: right strafe
         {
             Debug.Log("Robot Strafing Left");
-            robot.StafeLeft(movementDistance);
+            //robot.StafeLeft(movementDistance);
         }
 
         if (Input.GetKeyDown(KeyCode.D)) //TODO: right strafe
         {
             Debug.Log("Robot Strafing Right");
-            robot.StrafeRight(movementDistance);
+            //robot.StrafeRight(movementDistance);
         }
 
     }

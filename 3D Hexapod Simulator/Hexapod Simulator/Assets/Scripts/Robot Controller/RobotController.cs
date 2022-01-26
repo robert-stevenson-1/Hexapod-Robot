@@ -136,7 +136,10 @@ public class RobotController : MonoBehaviour
                 if (canTransmit && allowTransmit)
                 {
                     string toSend = getRobotData(robot);
-                    sendRobot(toSend, writeTimeout);
+                    if (toSend != data)
+                    {
+                        sendRobot(toSend, writeTimeout);
+                    }
                     canTransmit = false;
                     canReceive = true;
                 }

@@ -58,7 +58,7 @@ public class Leg : MonoBehaviour
         {
             liftLeg(liftAngle);
 
-            rotateLeg(rotateAngle);
+            rotateLeg(180 - rotateAngle);
 
             bendKnee(kneeAngle);
 
