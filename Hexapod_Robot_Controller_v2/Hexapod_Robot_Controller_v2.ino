@@ -548,7 +548,7 @@ void moveLegIK(leg *leg, float x, float y, float z) {
 
   float a1 = atan((L1 - OFFSET_LENGTH)/newY) * 180/PI;
   //float a1 = acos((L1 - OFFSET_LENGTH)/L2) * 180/PI;
-  float a2 = acos((powf(FEMUR_LENGTH, 2) - powf(L2, 2) - powf(TIBIA_LENGTH, 2)) / (-2 * FEMUR_LENGTH * L2)) * 180/PI;
+  float a2 = acos((powf(TIBIA_LENGTH, 2) - powf(L2, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * FEMUR_LENGTH * L2)) * 180/PI;
   float a3 = acos((powf(L2, 2) - powf(TIBIA_LENGTH, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * TIBIA_LENGTH * FEMUR_LENGTH)) * 180/PI;
 
   Serial.print("a1: ");
@@ -560,7 +560,7 @@ void moveLegIK(leg *leg, float x, float y, float z) {
  
   
   int liftAngle = (int)(180 - (a1 + a2));
-  int kneeAngle = (int)(180 - a3);
+  int kneeAngle = (int)a3;
 
   Serial.print("hipAngle: ");
   Serial.print(hipAngle);
