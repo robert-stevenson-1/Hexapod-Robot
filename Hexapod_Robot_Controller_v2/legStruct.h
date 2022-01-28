@@ -10,5 +10,7 @@ struct leg{
     float feetPos_X;
     float feetPos_Y;
     float feetPos_Z;
+    float bodyOffsetX;
+    float bodyOffsetY;
 };
 #endif

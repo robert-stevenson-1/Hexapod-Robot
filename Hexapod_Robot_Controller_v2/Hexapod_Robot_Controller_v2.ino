@@ -140,11 +140,17 @@ void loop() {
     }
     Serial.println(angles[17]);
 
+    Serial.println("FR");
     moveLegIK(&fr, angles[0], angles[1], angles[2]);
+    Serial.println("MR");
     moveLegIK(&mr, angles[0], angles[1], angles[2]);
+    Serial.println("BR");
     moveLegIK(&br, angles[0], angles[1], angles[2]);
+    Serial.println("FL");
     moveLegIK(&fl, angles[0], angles[1], angles[2]);
+    Serial.println("ML");
     moveLegIK(&ml, angles[0], angles[1], angles[2]);
+    Serial.println("BL");
     moveLegIK(&bl, angles[0], angles[1], angles[2]);
 
 //    moveLeg(&fr, angles[0], angles[1], angles[2]);
@@ -163,20 +169,30 @@ void loop() {
   
   }else{
 
-     if(up){
-      if(a >= 50){
-        up = false;
-      }
-      moveLegIK(&br, 0, a, 0);
-      a += 5;
-     }else{
-      if(a <= -30){
-        up = true;
-      }
-      moveLegIK(&br, 0, a, 0);
-      a -= 5;
-     }
-     //delay (10);
+//     if(up){
+//      if(a >= 50){
+//        up = false;
+//      }
+////      moveLegIK(&fr, 0, a, 0);
+////      moveLegIK(&fl, 0, a, 0);
+////      moveLegIK(&mr, 0, a, 0);
+////      moveLegIK(&ml, 0, a, 0);
+////      moveLegIK(&br, 0, a, 0);
+//      moveLegIK(&bl, 0, a, 0);
+//      a += 10;
+//     }else{
+//      if(a <= -30){
+//        up = true;
+//      }
+////      moveLegIK(&fr, 0, a, 0);
+////      moveLegIK(&fl, 0, a, 0);
+////      moveLegIK(&mr, 0, a, 0);
+////      moveLegIK(&ml, 0, a, 0);
+////      moveLegIK(&br, 0, a, 0);
+//      moveLegIK(&bl, 0, a, 0);
+//      a -= 10;
+//     }
+//     delay (1000);
   }
   
   // put your main code here, to run repeatedly:
@@ -420,6 +436,8 @@ void attachServos() {
   fr.feetPos_X = FR_X;
   fr.feetPos_Y = FR_Y;
   fr.feetPos_Z = FR_Z;
+  fr.bodyOffsetX = BODY_CENTER_OFFSET_1;
+  fr.bodyOffsetY = BODY_CENTER_OFFSET_2;
   //delay(20);
   //Setup the the Middle Right leg
   mr.hipRotate.attach(MR_ROTATE_PIN);
@@ -429,6 +447,8 @@ void attachServos() {
   mr.feetPos_X = MR_X;
   mr.feetPos_Y = MR_Y;
   mr.feetPos_Z = MR_Z;
+  mr.bodyOffsetX = BODY_SIDE_LENGTH;
+  mr.bodyOffsetY = 0;
   //delay(20);
   //Setup the the Back Right leg
   br.hipRotate.attach(BR_ROTATE_PIN);
@@ -438,6 +458,8 @@ void attachServos() {
   br.feetPos_X = BR_X;
   br.feetPos_Y = BR_Y;
   br.feetPos_Z = BR_Z;
+  br.bodyOffsetX = BODY_CENTER_OFFSET_1;
+  br.bodyOffsetY = -BODY_CENTER_OFFSET_2;
   //delay(20);
 
   //Left Side
@@ -450,6 +472,8 @@ void attachServos() {
   fl.feetPos_X = FL_X;
   fl.feetPos_Y = FL_Y;
   fl.feetPos_Z = FL_Z;
+  fl.bodyOffsetX = -BODY_CENTER_OFFSET_1;
+  fl.bodyOffsetY = BODY_CENTER_OFFSET_2;
   delay(20);
   //Setup the the Middle Left leg
   ml.hipRotate.attach(ML_ROTATE_PIN);
@@ -459,6 +483,8 @@ void attachServos() {
   ml.feetPos_X = ML_X;
   ml.feetPos_Y = ML_Y;
   ml.feetPos_Z = ML_Z;
+  ml.bodyOffsetX = -BODY_SIDE_LENGTH;
+  ml.bodyOffsetY = 0;
   delay(20);
   //Setup the the Back Left leg
   bl.hipRotate.attach(BL_ROTATE_PIN);
@@ -468,13 +494,20 @@ void attachServos() {
   bl.feetPos_X = BL_X;
   bl.feetPos_Y = BL_Y;
   bl.feetPos_Z = BL_Z;
+  bl.bodyOffsetX = -BODY_CENTER_OFFSET_1;
+  bl.bodyOffsetY = -BODY_CENTER_OFFSET_2;
   delay(20);
 }
 
 void moveLegIK(leg *leg, float x, float y, float z) {
+
+  Serial.print("feetX: ");
+  Serial.print(leg->feetPos_X);
+  Serial.print(" | feetY: ");
+  Serial.print(leg->feetPos_Y);
+  Serial.print(" | feetZ: ");
+  Serial.println(leg->feetPos_Z);
   
-
-
   float newX = leg->feetPos_X + x;
   float newY = leg->feetPos_Y + y;
   float newZ = leg->feetPos_Z + z;
@@ -486,13 +519,12 @@ void moveLegIK(leg *leg, float x, float y, float z) {
   Serial.print(" | z: ");
   Serial.print(z);
   Serial.print(" | newX: ");
-  Serial.print(newY);
+  Serial.print(newX);
   Serial.print(" | newY: ");
   Serial.print(newY);
   Serial.print(" | newZ: ");
   Serial.println(newZ);
   
-  float yOff = 20 - y;
   float L1 = sqrt(powf(newX, 2) + powf(newZ, 2));
   float L2 = sqrt(powf((L1 - OFFSET_LENGTH), 2) + powf(newY, 2));
 
@@ -500,7 +532,11 @@ void moveLegIK(leg *leg, float x, float y, float z) {
   Serial.print(L1);
   Serial.print(" L2: ");
   Serial.println(L2);
-
+  Serial.print("(L1 - OFESET_LENGTH)^2: ");
+  Serial.print(powf((L1 - OFFSET_LENGTH), 2));
+  Serial.print(" | L1 - OFESET_LENGTH: ");
+  Serial.println((L1 - OFFSET_LENGTH), 2);
+  
   
   //check if the leg tip can reach that point
   if(L2 > FEMUR_LENGTH + TIBIA_LENGTH){
@@ -511,7 +547,8 @@ void moveLegIK(leg *leg, float x, float y, float z) {
   int hipAngle = 90 - (int)(atan(newZ/newX) * 180/PI);
 
   float a1 = atan((L1 - OFFSET_LENGTH)/newY) * 180/PI;
-  float a2 = acos((powf(TIBIA_LENGTH, 2) - powf(L2, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * FEMUR_LENGTH * L2)) * 180/PI;
+  //float a1 = acos((L1 - OFFSET_LENGTH)/L2) * 180/PI;
+  float a2 = acos((powf(FEMUR_LENGTH, 2) - powf(L2, 2) - powf(TIBIA_LENGTH, 2)) / (-2 * FEMUR_LENGTH * L2)) * 180/PI;
   float a3 = acos((powf(L2, 2) - powf(TIBIA_LENGTH, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * TIBIA_LENGTH * FEMUR_LENGTH)) * 180/PI;
 
   Serial.print("a1: ");
