@@ -6,6 +6,18 @@
 #include "LegStruct.h"
 #include "RobotConfig.h"
 
+// ======================
+// =========ENUMS========
+// ======================
+
+enum legVal{
+  FR = 1,
+  MR = 2,
+  BR = 3,
+  FL = 4,
+  ML = 5,
+  BL = 6
+};
 
 // ======================
 // ========STRUCT========
@@ -132,26 +144,37 @@ void loop() {
     Serial.println(data);
     
     //parse data to get angles
-    float angles[18];
-    getAnglesFromData(data, angles, 18, " ");
-    for(int i = 0; i < 17; i++){
-      Serial.print(angles[i]);
-      Serial.print(" ");
+    char *comData[4];
+    // Example of Command: <1 90 90 90> (leg: 1(FR) | Hip: 90deg | lift: 90deg | Knee: 90deg)
+    getComData(data, comData, 4, " ");
+    for(int i = 0; i < 4; i++){
+      Serial.print(" | ");
+      Serial.print(comData[i]);
     }
-    Serial.println(angles[17]);
 
-    Serial.println("FR");
-    moveLegIK(&fr, angles[0], angles[1], angles[2]);
-    Serial.println("MR");
-    moveLegIK(&mr, angles[0], angles[1], angles[2]);
-    Serial.println("BR");
-    moveLegIK(&br, angles[0], angles[1], angles[2]);
-    Serial.println("FL");
-    moveLegIK(&fl, angles[0], angles[1], angles[2]);
-    Serial.println("ML");
-    moveLegIK(&ml, angles[0], angles[1], angles[2]);
-    Serial.println("BL");
-    moveLegIK(&bl, angles[0], angles[1], angles[2]);
+    Serial.print("Leg: ");
+    Serial.println(comData[0]);
+    switch(atoi(comData[0])){
+      case FR: // 1
+        Serial.println("FR");
+        moveLegIK(&fr, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+      case MR: // 2
+        Serial.println("MR");
+        moveLegIK(&mr, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+      case BR: // 3
+        Serial.println("BR");
+        moveLegIK(&br, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+      case FL: // 4
+        Serial.println("FL");
+        moveLegIK(&fl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+      case ML: // 5
+        Serial.println("ML");
+        moveLegIK(&ml, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+      case BL: // 6 
+        Serial.println("BL");
+        moveLegIK(&bl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+    }
+
 
 //    moveLeg(&fr, angles[0], angles[1], angles[2]);
 //    delay(20);
@@ -262,15 +285,15 @@ void clearInputBuffer(){
   }
 }
 
-void getAnglesFromData(char* data, float* angles, const int arrSize,const char* delim){
+void getComData(char* data, char** retData, const int arrSize,const char* delim){
 
   //Serial.println("Started Parsing");
   int i = 0;
   
   char* d = strtok(data, delim);
   while (d != NULL) {
-    angles[i] = atoi(d);
-    //Serial.println (angles[i]);
+    retData[i] = d;
+    //Serial.println (retData[i]);
     d = strtok(NULL, delim);
     i++;
   }
