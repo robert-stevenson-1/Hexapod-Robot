@@ -6,17 +6,26 @@
 #include "LegStruct.h"
 #include "RobotConfig.h"
 
+
+// ======================
+// =========CONST========
+// ======================
+
+#define WRITE_INTERVAL 10 //0.5 sec
+
+
 // ======================
 // =========ENUMS========
 // ======================
 
-enum legVal{
+enum comID{
   FR = 1,
   MR = 2,
   BR = 3,
   FL = 4,
   ML = 5,
-  BL = 6
+  BL = 6,
+  R = 7
 };
 
 // ======================
@@ -47,12 +56,18 @@ leg mr;
 leg ml;
 leg br;
 leg bl;
+leg* legs[] = {&fr, &mr, &br, &fl, &ml, &bl};
+
+int targetAngles[6][3];
 
 //Comm Data
 const byte maxData = 128;
 char data[maxData];
 char outboundData[maxData];
 bool newData = false;
+
+//Timing var for managing program blocking when writng servos
+unsigned long previousMillis = 0;
 
 //test vars
 int a = 0;
@@ -111,18 +126,17 @@ void setup() {
 
   
   #ifdef IK_MODE
-  //fr.moveLeg(90, 90, 90);
-  //moveLegIK(&fr, 0, 0, 0);
+  moveLegIK(targetAngles[0], &fr, 0, 0, 0);
   delay(20);
-  //moveLegIK(&mr, 0, 0, 0);
+  moveLegIK(targetAngles[1], &mr, 0, 0, 0);
   delay(20);
-  moveLegIK(&br, 0, 0, 0);
+  moveLegIK(targetAngles[2], &br, 0, 0, 0);
   delay(20);
-  //moveLegIK(&fl, 0, 0, 0);
+  moveLegIK(targetAngles[3], &fl, 0, 0, 0);
   delay(20);
-  //moveLegIK(&ml, 0, 0, 0);
+  moveLegIK(targetAngles[4], &ml, 0, 0, 0);
   delay(20);
-  //moveLegIK(&bl, 0, 0, 0);
+  moveLegIK(targetAngles[5], &bl, 0, 0, 0);
   #endif
   // ==================================
 
@@ -134,6 +148,9 @@ void setup() {
 void loop() {
   #ifdef IK_MODE//NORMAL
   //Serial.flush();
+
+  //used for checking intervals when moving leg servos so we only move for x amount of time minimising the amount of program blocking when writing servo positions
+  unsigned long currentMillis = millis();
   
   //Read Data in
   getData();
@@ -152,71 +169,82 @@ void loop() {
       Serial.print(comData[i]);
     }
 
-    Serial.print("Leg: ");
+    Serial.print(" || => Leg: ");
     Serial.println(comData[0]);
     switch(atoi(comData[0])){
       case FR: // 1
         Serial.println("FR");
-        moveLegIK(&fr, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        moveLegIK(targetAngles[0], &fr, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        break;
       case MR: // 2
         Serial.println("MR");
-        moveLegIK(&mr, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        moveLegIK(targetAngles[1], &mr, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        break;
       case BR: // 3
         Serial.println("BR");
-        moveLegIK(&br, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        moveLegIK(targetAngles[2], &br, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        break;
       case FL: // 4
         Serial.println("FL");
-        moveLegIK(&fl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        moveLegIK(targetAngles[3], &fl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        break;
       case ML: // 5
         Serial.println("ML");
-        moveLegIK(&ml, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        moveLegIK(targetAngles[4], &ml, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
       case BL: // 6 
         Serial.println("BL");
-        moveLegIK(&bl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        moveLegIK(targetAngles[5], &bl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        break;
+      case R: // 7 // Move the whole robot
+        Serial.println("R");
+        moveTowards(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        break;
+      default:
+        Serial.println("Invalid Command ID");
+        break;
+    }
+  }
+    Serial.println("Target Angles: ");
+    for(int i = 0; i < 6; i++){
+      for(int j = 0; j < 3; j++){
+        Serial.print(" | ");
+        Serial.print(targetAngles[i][j]); 
+      }
+      Serial.println("");
     }
 
+    //UPDATE THE SERVO POSITIONS
+    
 
-//    moveLeg(&fr, angles[0], angles[1], angles[2]);
-//    delay(20);
-//    moveLeg(&mr, angles[3], angles[4], angles[5]);
-//    delay(20);
-//    moveLeg(&br, angles[6], angles[7], angles[8]);
-//    delay(20);
-//    moveLeg(&fl, angles[9], angles[10], angles[11]);
-//    delay(20);
-//    moveLeg(&ml, angles[12], angles[13], angles[14]);
-//    delay(20);
-//    moveLeg(&bl, angles[15], angles[16], angles[17]);
+  if(currentMillis - previousMillis >= WRITE_INTERVAL){
+    Serial.println("Updating Servos...");
+        // save the last time we wrote
+    previousMillis = currentMillis;
 
-  delay(4000);
-  
-  }else{
+    for (int i = 0; i < 6; i++){
+      leg* l = legs[i];
+      if(l->hipRotate.read() < targetAngles[i][0]){
+        l->hipRotate.write(l->hipRotate.read()+1);
+      }else if(l->hipRotate.read() > targetAngles[i][0]){
+        l->hipRotate.write(l->hipRotate.read()-1);         
+      }
+      if(l->hipLift.read() < targetAngles[i][1]){
+        l->hipLift.write(l->hipLift.read()+1);
+      }else if(l->hipLift.read() > targetAngles[i][1]){
+        l->hipLift.write(l->hipLift.read()-1);         
+      }
 
-//     if(up){
-//      if(a >= 50){
-//        up = false;
-//      }
-////      moveLegIK(&fr, 0, a, 0);
-////      moveLegIK(&fl, 0, a, 0);
-////      moveLegIK(&mr, 0, a, 0);
-////      moveLegIK(&ml, 0, a, 0);
-////      moveLegIK(&br, 0, a, 0);
-//      moveLegIK(&bl, 0, a, 0);
-//      a += 10;
-//     }else{
-//      if(a <= -30){
-//        up = true;
-//      }
-////      moveLegIK(&fr, 0, a, 0);
-////      moveLegIK(&fl, 0, a, 0);
-////      moveLegIK(&mr, 0, a, 0);
-////      moveLegIK(&ml, 0, a, 0);
-////      moveLegIK(&br, 0, a, 0);
-//      moveLegIK(&bl, 0, a, 0);
-//      a -= 10;
-//     }
-//     delay (1000);
+      if(l->knee.read() < targetAngles[i][2]){
+        l->knee.write(l->knee.read()+1);
+      }else if(l->knee.read() > targetAngles[i][2]){
+        l->knee.write(l->knee.read()-1);         
+      }        
+      //moveLeg(leg, hipAngle, liftAngle, kneeAngle);
+    }
+    Serial.println("Done updating Servos");
   }
+    //updateServos(1000);
+
   
   // put your main code here, to run repeatedly:
   //distance = *(HCSR04.measureDistanceCm());
@@ -241,7 +269,7 @@ void loop() {
   //Reset fetched data
   if(newData == true){
     newData = false;
-    memset(data, 0, sizeof(data)); //clear the arrayz
+    memset(data, 0, sizeof(data)); //clear the arrays
     clearInputBuffer();
   }
   #endif 
@@ -301,153 +329,6 @@ void getComData(char* data, char** retData, const int arrSize,const char* delim)
   //Serial.println("Done Parsing");
 }
 
-/*
-void rotate(int rotVal, int liftVal, int delVal){
-    
-  //==First 3
-  //Move FL up
-  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle() + liftVal, robot.getFl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle() + liftVal);
-  delay(delVal);
-
-  //Move BL up
-  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle() + liftVal, robot.getBl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle() + liftVal);
-  delay(delVal);
-
-  //Move MR up
-  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle() + liftVal, robot.getMr().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle() + liftVal);
-  delay(delVal);
-
-  //FL to the right and down
-  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle() - rotVal, robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle() - liftVal);
-  delay(delVal);
-  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle(), robot.getFl().getLiftAngle() - liftVal, robot.getFl().getKneeAngle());
-  delay(delVal);
-
-  //BL to the right and down
-  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle() - rotVal, robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle() - liftVal);
-  delay(delVal);
-  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle(), robot.getBl().getLiftAngle() - liftVal, robot.getBl().getKneeAngle());
-  delay(delVal);
-
-  //MR to the right and down
-  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle() - rotVal, robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle() - liftVal);
-  delay(delVal);
-  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle(), robot.getMr().getLiftAngle() - liftVal, robot.getMr().getKneeAngle());
-  delay(delVal);
-
-  //==second 3
-
-  //Move FR up
-  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle() + liftVal, robot.getFr().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle() + liftVal);
-  delay(delVal);
-
-  //Move BR up
-  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle() + liftVal, robot.getBr().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle() + liftVal);
-  delay(delVal);
-
-  //Move ML up
-  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle() + liftVal, robot.getMl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle() + liftVal);
-  delay(delVal);
-
-  //FR to the right and down
-  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle() - rotVal, robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle() - liftVal);
-  delay(delVal);
-  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle(), robot.getFr().getLiftAngle() - liftVal, robot.getFr().getKneeAngle());
-  delay(delVal);
-
-  //BR to the right and down
-  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle() - rotVal, robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle() - liftVal);
-  delay(delVal);
-  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle(), robot.getBr().getLiftAngle() - liftVal, robot.getBr().getKneeAngle());
-  delay(delVal);
-
-  //ML to the right and down
-  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle() - rotVal, robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle() - liftVal);
-  delay(delVal);
-  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle(), robot.getMl().getLiftAngle() - liftVal, robot.getMl().getKneeAngle());
-  delay(delVal);
-
-  //==Center the hip servos
-  robot.updateLeg(&robot.getFl(), robot.getFl().getRotationAngle()+ rotVal, robot.getFl().getLiftAngle(), robot.getFl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getFr(), robot.getFr().getRotationAngle()+ rotVal, robot.getFr().getLiftAngle(), robot.getFr().getKneeAngle());
-  delay(delVal);
-  
-  robot.updateLeg(&robot.getMl(), robot.getMl().getRotationAngle() + rotVal, robot.getMl().getLiftAngle(), robot.getMl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getMr(), robot.getMr().getRotationAngle() + rotVal, robot.getMr().getLiftAngle(), robot.getMr().getKneeAngle());
-  delay(delVal);
-    
-  robot.updateLeg(&robot.getBl(), robot.getBl().getRotationAngle()+ rotVal, robot.getBl().getLiftAngle(), robot.getBl().getKneeAngle());
-  delay(delVal);
-  robot.updateLeg(&robot.getBr(), robot.getBr().getRotationAngle()+ rotVal, robot.getBr().getLiftAngle(), robot.getBr().getKneeAngle());
-  delay(delVal); 
-}
-
-void serialMonitorTest(){
-  String angleStr = "";
-  int angle = 90;
-  if(Serial.available() > 0){
-    angleStr = Serial.readString();
-    angle = angleStr.toInt();
-    Serial.print("Current Angle: ");
-    Serial.print(angle);
-    //fr.moveLeg(angle, 90 , 90);
-    Serial.print("| Hip (Rotate) Angle: ");
-    //Serial.print(fr.getHipRotate().read());
-    Serial.print("| Hip (Lift) Angle: ");
-    //Serial.print(fr.getHipLift().read());
-    Serial.print("| Knee Angle: ");
-    //Serial.println(fr.getKnee().read());
-    angle = 0;
-  }
-}
-
-void serialMonitorLegControl(){
-  String cmd[3] = {"","",""};
-  int angle = 90;
-  if(Serial.available() > 0){
-    cmd[0] = Serial.readStringUntil(' ');
-    cmd[0] = Serial.readStringUntil(' ');
-    cmd[0] = Serial.readStringUntil('\n');
-    angle = cmd[2].toInt();
-    Serial.print("Current Angle: ");
-    Serial.print(angle);
-    //fr.moveLeg(angle, 90 , 90);
-    Serial.print("| Hip (Rotate) Angle: ");
-    //Serial.print(fr.getHipRotate().read());
-    Serial.print("| Hip (Lift) Angle: ");
-    //Serial.print(fr.getHipLift().read());
-    Serial.print("| Knee Angle: ");
-    //Serial.println(fr.getKnee().read());
-    angle = 0;
-  }
-}
-*/
 void attachServos() {
   //Right Side
   
@@ -522,19 +403,28 @@ void attachServos() {
   delay(20);
 }
 
-void moveLegIK(leg *leg, float x, float y, float z) {
+void updateServos(int interval){
+}
 
+void moveTowards(int x, int y, int z){
+  Serial.println("Moving Forward point");
+
+}
+
+//Returns the angle that the leg's servos have to be set to reach that point in the retData param
+void moveLegIK(int *retData, leg *leg, float x, float y, float z) {
+/*
   Serial.print("feetX: ");
   Serial.print(leg->feetPos_X);
   Serial.print(" | feetY: ");
   Serial.print(leg->feetPos_Y);
   Serial.print(" | feetZ: ");
   Serial.println(leg->feetPos_Z);
-  
+*/
   float newX = leg->feetPos_X + x;
   float newY = leg->feetPos_Y + y;
   float newZ = leg->feetPos_Z + z;
-  
+/*  
   Serial.print("x: ");
   Serial.print(x);
   Serial.print(" | y: ");
@@ -547,10 +437,10 @@ void moveLegIK(leg *leg, float x, float y, float z) {
   Serial.print(newY);
   Serial.print(" | newZ: ");
   Serial.println(newZ);
-  
+*/  
   float L1 = sqrt(powf(newX, 2) + powf(newZ, 2));
   float L2 = sqrt(powf((L1 - OFFSET_LENGTH), 2) + powf(newY, 2));
-
+/*
   Serial.print("L1: ");
   Serial.print(L1);
   Serial.print(" L2: ");
@@ -559,7 +449,7 @@ void moveLegIK(leg *leg, float x, float y, float z) {
   Serial.print(powf((L1 - OFFSET_LENGTH), 2));
   Serial.print(" | L1 - OFESET_LENGTH: ");
   Serial.println((L1 - OFFSET_LENGTH), 2);
-  
+*/  
   
   //check if the leg tip can reach that point
   if(L2 > FEMUR_LENGTH + TIBIA_LENGTH){
@@ -573,14 +463,14 @@ void moveLegIK(leg *leg, float x, float y, float z) {
   //float a1 = acos((L1 - OFFSET_LENGTH)/L2) * 180/PI;
   float a2 = acos((powf(TIBIA_LENGTH, 2) - powf(L2, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * FEMUR_LENGTH * L2)) * 180/PI;
   float a3 = acos((powf(L2, 2) - powf(TIBIA_LENGTH, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * TIBIA_LENGTH * FEMUR_LENGTH)) * 180/PI;
-
+/*
   Serial.print("a1: ");
   Serial.print(a1);
   Serial.print(" | a2: ");
   Serial.print(a2);
   Serial.print(" | a3: ");
   Serial.println(a3);
- 
+*/ 
   
   int liftAngle = (int)(180 - (a1 + a2));
   int kneeAngle = (int)a3;
@@ -591,30 +481,47 @@ void moveLegIK(leg *leg, float x, float y, float z) {
   Serial.print(liftAngle);
   Serial.print(" | kneeAngle: ");
   Serial.println(kneeAngle);
-  
-  moveLeg(leg, hipAngle, liftAngle, kneeAngle);
+
+/*  
+  Serial.print("BEFORE =>");
+  Serial.print("retData[0]: ");
+  Serial.print(retData[0]);
+  Serial.print(" | retData[1]: ");
+  Serial.print(retData[1]);
+  Serial.print(" | retData[2]: ");
+  Serial.println(retData[2]);
+*/  
+  retData[0] = hipAngle;
+  retData[1] = liftAngle;
+  retData[2] = kneeAngle;
+/*  
+  Serial.print("AFTER =>");
+  Serial.print("retData[0]: ");
+  Serial.print(retData[0]);
+  Serial.print(" | retData[1]: ");
+  Serial.print(retData[1]);
+  Serial.print(" | retData[2]: ");
+  Serial.println(retData[2]);
+*/
+  //moveLeg(leg, hipAngle, liftAngle, kneeAngle);
 }
 
 void moveLeg(leg *leg, int rotateAngle, int liftAngle, int kneeAngle) {
   if(leg->isLeft){
     leg->hipLift.write(180-liftAngle);
-    delay(SERVO_WRITE_DELAY);
-    
+
     leg->hipRotate.write(180-rotateAngle);
-    delay(SERVO_WRITE_DELAY);
+
 
     leg->knee.write(180-kneeAngle);
-    delay(SERVO_WRITE_DELAY);
+
   
   } else {
     leg->hipLift.write(liftAngle);
-    delay(SERVO_WRITE_DELAY);
-    
+   
     leg->hipRotate.write(rotateAngle);
-    delay(SERVO_WRITE_DELAY);
     
     leg->knee.write(kneeAngle);
-    delay(SERVO_WRITE_DELAY);
   }
   /*
   leg.liftAngle = hipLift.read();
@@ -625,77 +532,6 @@ void moveLeg(leg *leg, int rotateAngle, int liftAngle, int kneeAngle) {
   delay(SERVO_WRITE_DELAY);
   */
 }
-
-/*
-void attachServos() {
-  // ===> LEGS:
-  //Setup the Front right legs
-  robot.getFr().getHipRotate().attach(FR_ROTATE_PIN);
-  frontRight.lift.attach(FR_LIFT_PIN);
-  frontRight.knee.attach(FR_KNEE_PIN);
-
-  //Setup the Middle right legs
-  middleRight.rotate.attach(MR_ROTATE_PIN);
-  middleRight.lift.attach(MR_LIFT_PIN);
-  middleRight.knee.attach(MR_KNEE_PIN);
-
-  //Setup the Bsck right legs
-  backRight.rotate.attach(BR_ROTATE_PIN);
-  backRight.lift.attach(BR_LIFT_PIN);
-  backRight.knee.attach(BR_KNEE_PIN);
-
-  //Setup the Front left legs
-  frontLeft.rotate.attach(FL_ROTATE_PIN);
-  frontLeft.lift.attach(FL_LIFT_PIN);
-  frontLeft.knee.attach(FL_KNEE_PIN);
-
-
-  //Setup the Middle left legs
-  middleLeft.rotate.attach(ML_ROTATE_PIN);
-  middleLeft.lift.attach(ML_LIFT_PIN);
-  middleLeft.knee.attach(ML_KNEE_PIN);
-
-  //Setup the Back left legs
-  backLeft.rotate.attach(BL_ROTATE_PIN);
-  backLeft.lift.attach(BL_LIFT_PIN);
-  backLeft.knee.attach(BL_KNEE_PIN);
-
-  // ===> HEAD:
-  headRotate.attach(HEAD_ROTATE_PIN);
-  headLift.attach(HEAD_LIFT_PIN);
-
-
-}
-
-void legSetAngles(Leg *leg, int _rotateAngle, int _liftAngle, int _kneeAngle) {
-  leg->rotate.write(_rotateAngle);
-  leg->rotateAngle = _rotateAngle;
-  delay(SERVO_WRITE_DELAY);
-
-  leg->lift.write(_liftAngle);
-  leg->liftAngle = _liftAngle;
-  delay(SERVO_WRITE_DELAY);
-
-  leg->knee.write(_kneeAngle);
-  leg->kneeAngle = _kneeAngle;
-  delay(SERVO_WRITE_DELAY);
-
-}
-
-void updateLeg(Leg *leg, Leg *newLeg) {
-  leg->rotate.write(newLeg->rotateAngle);
-  leg->rotateAngle = newLeg->rotateAngle;
-  delay(SERVO_WRITE_DELAY);
-
-  leg->lift.write(newLeg->liftAngle);
-  leg->liftAngle = newLeg->liftAngle;
-  delay(SERVO_WRITE_DELAY);
-
-  leg->knee.write(newLeg->kneeAngle);
-  leg->kneeAngle = newLeg->kneeAngle;
-  delay(SERVO_WRITE_DELAY);
-}
-*/
 
 void getBalanceData() {
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
