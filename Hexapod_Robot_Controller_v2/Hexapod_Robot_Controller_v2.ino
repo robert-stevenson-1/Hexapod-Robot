@@ -213,9 +213,11 @@ void loop() {
 
 void getCommand(){
   //parse data to get angles
-    char *comData[4];
-    // Example of Command: <1 90 90 90> (leg: 1(FR) | Hip: 90deg | lift: 90deg | Knee: 90deg)
-    getComData(data, comData, 4, " ");
+    char *comData[5];
+    // Example of Command: <1 90 90 90> (leg: 1(FR) | Hip: 90deg | lift: 90deg | Knee: 90deg | Stage: ~)
+    // Example of Command: <8 ~ ~ ~ 0> (Gait Stage | Hip: ~ | lift: ~ | Knee: ~ | Stage: 0)
+    //  ~ : ANY INT VALUE (we don't care much for that value based on the command we are doing)
+    getComData(data, comData, 5, " ");
     for(int i = 0; i < 4; i++){
       Serial.print(" | ");
       Serial.print(comData[i]);
@@ -250,7 +252,11 @@ void getCommand(){
         break;
       case R: // 7 // Move the whole robot
         Serial.println("R");
-        moveTowards(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        moveTowards(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 6); // 6 => no stage selected
+        break;
+      case 8:
+        Serial.println("Stage Select");
+        moveTowards(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]));
         break;
       default:
         Serial.println("Invalid Command ID");
@@ -424,23 +430,60 @@ void updateLegs(){
   //Serial.println("Done updating Servos");
 }
 
-void moveTowards(int stage, int x, int y, int z){
+void moveTowards(int x, int y, int z, int stage){
   Serial.println("Moving Forward point");
 
   switch(stage){
-    case 0:
-      moveLegIK(targetAngles[0], &fr, x, y, z);
-      moveLegIK(targetAngles[2], &br, x, y, z);
-      moveLegIK(targetAngles[4], &ml, x, y, z);
+    case 0: //set 1 up
+    //set 1
+      moveLegIK(targetAngles[0], &fr, 0, 25 + y, 0);
+      moveLegIK(targetAngles[2], &br, 0, 25 + y, 0);
+      moveLegIK(targetAngles[4], &ml, 0, 25 + y, 0);
+    break;
+    case 1: //set 1 move
+    //set 1
+      moveLegIK(targetAngles[0], &fr, x, 25 + y, z);
+      moveLegIK(targetAngles[2], &br, x, 25 + y, z);
+      moveLegIK(targetAngles[4], &ml, x, 25 + y, z);
+
       break;
-    case 1:
+    case 2: //set 1 down
+    //set 1
+      moveLegIK(targetAngles[0], &fr, x, 0, z);
+      moveLegIK(targetAngles[2], &br, x, 0, z);
+      moveLegIK(targetAngles[4], &ml, x, 0, z);
+      break;
+    case 3: //set 2 up, set 1 origin
+    //set 2
+      moveLegIK(targetAngles[1], &mr, 0, 25 + y, 0);
+      moveLegIK(targetAngles[3], &fl, 0, 25 + y, 0);
+      moveLegIK(targetAngles[5], &bl, 0, 25 + y, 0);
+    //set 1
+      moveLegIK(targetAngles[0], &fr, 0, 0, 0);
+      moveLegIK(targetAngles[2], &br, 0, 0, 0);
+      moveLegIK(targetAngles[4], &ml, 0, 0, 0);
+      break;
+    case 4: // set 2 move
+    //set 2
+      moveLegIK(targetAngles[1], &mr, x, 25 + y, z);
+      moveLegIK(targetAngles[3], &fl, x, 25 + y, z);
+      moveLegIK(targetAngles[5], &bl, x, 25 + y, z);
+      break; 
+    case 5:
+    //set 2
+      moveLegIK(targetAngles[1], &mr, 0, 0, 0);
+      moveLegIK(targetAngles[3], &fl, 0, 0, 0);
+      moveLegIK(targetAngles[5], &bl, 0, 0, 0);    
+      break;
+    default:
+    //set 2
       moveLegIK(targetAngles[1], &mr, x, y, z);
       moveLegIK(targetAngles[3], &fl, x, y, z);
       moveLegIK(targetAngles[5], &bl, x, y, z);
-      break;
-    case 2:
-      break;
-    default:
+    //set 1
+      moveLegIK(targetAngles[0], &fr, x, y, z);
+      moveLegIK(targetAngles[2], &br, x, y, z);
+      moveLegIK(targetAngles[4], &ml, x, y, z);
       break;
   }
 
