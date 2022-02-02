@@ -11,7 +11,7 @@
 // =========CONST========
 // ======================
 
-#define WRITE_INTERVAL 10 //0.5 sec
+#define WRITE_INTERVAL 0 //0.5 sec
 
 
 // ======================
@@ -22,9 +22,9 @@ enum comID{
   FR = 1,
   MR = 2,
   BR = 3,
-  FL = 4,
+  FL = 6,
   ML = 5,
-  BL = 6,
+  BL = 4,
   R = 7
 };
 
@@ -159,8 +159,60 @@ void loop() {
   if(newData == true){
 
     Serial.println(data);
-    
-    //parse data to get angles
+
+    getCommand();    
+  }
+
+/*
+    Serial.println("Target Angles: ");
+    for(int i = 0; i < 6; i++){
+      for(int j = 0; j < 3; j++){
+        Serial.print(" | ");
+        Serial.print(targetAngles[i][j]); 
+      }
+      Serial.println("");
+    }
+*/
+  //UPDATE THE LEG SERVOS TO TARGET POSITIONS
+  
+  if(currentMillis - previousMillis >= WRITE_INTERVAL){
+    // save the last time we wrote
+    previousMillis = currentMillis;
+
+    updateLegs();
+  }
+
+  // put your main code here, to run repeatedly:
+  //distance = *(HCSR04.measureDistanceCm());
+
+  //Serial.println(robot.getBl().getHipRotate().attached());
+  //get balance data
+  //getBalanceData();
+  // mpu print data
+  /*
+    Serial.print(mpu.getAccelerationX());
+    Serial.print(" ");
+    Serial.println(mpu.getAccelerationY());  
+    Serial.print(" ");
+    Serial.print(mpu.getRotationX());
+    Serial.print(" ");
+    Serial.print(mpu.getRotationY());
+    Serial.print(" ");
+    Serial.print(mpu.getRotationZ());
+    Serial.print(" ");
+        */
+
+  //Reset fetched data
+  if(newData == true){
+    newData = false;
+    memset(data, 0, sizeof(data)); //clear the arrays
+    clearInputBuffer();
+  }
+  #endif 
+}
+
+void getCommand(){
+  //parse data to get angles
     char *comData[4];
     // Example of Command: <1 90 90 90> (leg: 1(FR) | Hip: 90deg | lift: 90deg | Knee: 90deg)
     getComData(data, comData, 4, " ");
@@ -191,6 +243,7 @@ void loop() {
       case ML: // 5
         Serial.println("ML");
         moveLegIK(targetAngles[4], &ml, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
+        break;
       case BL: // 6 
         Serial.println("BL");
         moveLegIK(targetAngles[5], &bl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
@@ -203,76 +256,6 @@ void loop() {
         Serial.println("Invalid Command ID");
         break;
     }
-  }
-    Serial.println("Target Angles: ");
-    for(int i = 0; i < 6; i++){
-      for(int j = 0; j < 3; j++){
-        Serial.print(" | ");
-        Serial.print(targetAngles[i][j]); 
-      }
-      Serial.println("");
-    }
-
-    //UPDATE THE SERVO POSITIONS
-    
-
-  if(currentMillis - previousMillis >= WRITE_INTERVAL){
-    Serial.println("Updating Servos...");
-        // save the last time we wrote
-    previousMillis = currentMillis;
-
-    for (int i = 0; i < 6; i++){
-      leg* l = legs[i];
-      if(l->hipRotate.read() < targetAngles[i][0]){
-        l->hipRotate.write(l->hipRotate.read()+1);
-      }else if(l->hipRotate.read() > targetAngles[i][0]){
-        l->hipRotate.write(l->hipRotate.read()-1);         
-      }
-      if(l->hipLift.read() < targetAngles[i][1]){
-        l->hipLift.write(l->hipLift.read()+1);
-      }else if(l->hipLift.read() > targetAngles[i][1]){
-        l->hipLift.write(l->hipLift.read()-1);         
-      }
-
-      if(l->knee.read() < targetAngles[i][2]){
-        l->knee.write(l->knee.read()+1);
-      }else if(l->knee.read() > targetAngles[i][2]){
-        l->knee.write(l->knee.read()-1);         
-      }        
-      //moveLeg(leg, hipAngle, liftAngle, kneeAngle);
-    }
-    Serial.println("Done updating Servos");
-  }
-    //updateServos(1000);
-
-  
-  // put your main code here, to run repeatedly:
-  //distance = *(HCSR04.measureDistanceCm());
-
-  //Serial.println(robot.getBl().getHipRotate().attached());
-  //get balance data
-  //getBalanceData();
-  // mpu print data
-  /*
-    Serial.print(mpu.getAccelerationX());
-    Serial.print(" ");
-    Serial.println(mpu.getAccelerationY());  
-    Serial.print(" ");
-    Serial.print(mpu.getRotationX());
-    Serial.print(" ");
-    Serial.print(mpu.getRotationY());
-    Serial.print(" ");
-    Serial.print(mpu.getRotationZ());
-    Serial.print(" ");
-        */
-
-  //Reset fetched data
-  if(newData == true){
-    newData = false;
-    memset(data, 0, sizeof(data)); //clear the arrays
-    clearInputBuffer();
-  }
-  #endif 
 }
 
 void getData() {
@@ -403,13 +386,67 @@ void attachServos() {
   delay(20);
 }
 
-void updateServos(int interval){
+void updateLegs(){
+  //for each leg of the robot
+    for (int i = 0; i < 6; i++){
+      leg* l = legs[i]; //grab the address of the leg
+
+      //hip servo of the leg
+      // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
+      if(l->curHip < targetAngles[i][0]){
+        l->curHip++;
+      }else if(l->curHip > targetAngles[i][0]){
+        l->curHip--;
+      }
+      //l->hipRotate.write(l->curHip);   
+      
+      // Lift servo of the leg
+      // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
+      if(l->curLift < targetAngles[i][1]){
+        l->curLift++;
+      }else if(l->curLift > targetAngles[i][1]){
+        l->curLift--;         
+      }
+      //l->hipLift.write(l->curLift);
+
+      // knee servo of the leg
+      // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
+      if(l->curKnee < targetAngles[i][2]){
+        l->curKnee++;
+      }else if(l->curKnee > targetAngles[i][2]){
+        l->curKnee--;        
+      }
+      //l->knee.write(l->curKnee);         
+
+      //move the servos to the next position
+      moveLeg(l, l->curHip, l->curLift, l->curKnee);
+  }
+  //Serial.println("Done updating Servos");
 }
 
-void moveTowards(int x, int y, int z){
+void moveTowards(int stage, int x, int y, int z){
   Serial.println("Moving Forward point");
 
+  switch(stage){
+    case 0:
+      moveLegIK(targetAngles[0], &fr, x, y, z);
+      moveLegIK(targetAngles[2], &br, x, y, z);
+      moveLegIK(targetAngles[4], &ml, x, y, z);
+      break;
+    case 1:
+      moveLegIK(targetAngles[1], &mr, x, y, z);
+      moveLegIK(targetAngles[3], &fl, x, y, z);
+      moveLegIK(targetAngles[5], &bl, x, y, z);
+      break;
+    case 2:
+      break;
+    default:
+      break;
+  }
+
+
 }
+
 
 //Returns the angle that the leg's servos have to be set to reach that point in the retData param
 void moveLegIK(int *retData, leg *leg, float x, float y, float z) {
@@ -510,7 +547,7 @@ void moveLeg(leg *leg, int rotateAngle, int liftAngle, int kneeAngle) {
   if(leg->isLeft){
     leg->hipLift.write(180-liftAngle);
 
-    leg->hipRotate.write(180-rotateAngle);
+    leg->hipRotate.write(rotateAngle);
 
 
     leg->knee.write(180-kneeAngle);
