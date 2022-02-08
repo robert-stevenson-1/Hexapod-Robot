@@ -477,6 +477,7 @@ void gait(int x, int y, int z, int stage){
     case 2: 
       Serial.println("Set 1 up move");
       //set 1
+      Serial.println("Fr Leg");
       moveLegIK(targetAngles[0], &fr, x, 50 + y, z);
       moveLegIK(targetAngles[2], &br, x, 50 + y, z);
       moveLegIK(targetAngles[4], &ml, x, 50 + y, z);
@@ -542,7 +543,7 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z) {
   float newX = leg->feetPos_X + x;
   float newY = leg->feetPos_Y + y;
   float newZ = leg->feetPos_Z + z;
-/*  
+ 
   Serial.print("x: ");
   Serial.print(x);
   Serial.print(" | y: ");
@@ -555,7 +556,7 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z) {
   Serial.print(newY);
   Serial.print(" | newZ: ");
   Serial.println(newZ);
-*/  
+  
   float L1 = sqrt(powf(newX, 2) + powf(newZ, 2));
   float L2 = sqrt(powf((L1 - OFFSET_LENGTH), 2) + powf(newY, 2));
 /*
