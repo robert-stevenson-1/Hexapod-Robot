@@ -62,6 +62,29 @@
   #define BL_Y TIBIA_LENGTH
   #define BL_Z sin(-60/180*PI)*(OFFSET_LENGTH + FEMUR_LENGTH)
 
+  #define FR_ROTATE_INIT_ANGLE 90
+  #define FR_LIFT_INIT_ANGLE 90
+  #define FR_KNEE_INIT_ANGLE 90
+  
+  #define MR_ROTATE_INIT_ANGLE 90
+  #define MR_LIFT_INIT_ANGLE 90
+  #define MR_KNEE_INIT_ANGLE 90
+  
+  #define BR_ROTATE_INIT_ANGLE 90
+  #define BR_LIFT_INIT_ANGLE 90
+  #define BR_KNEE_INIT_ANGLE 90
+  
+  #define FL_ROTATE_INIT_ANGLE 90
+  #define FL_LIFT_INIT_ANGLE 90
+  #define FL_KNEE_INIT_ANGLE 90
+  
+  #define ML_ROTATE_INIT_ANGLE 90
+  #define ML_LIFT_INIT_ANGLE 90
+  #define ML_KNEE_INIT_ANGLE 90
+  
+  #define BL_ROTATE_INIT_ANGLE 90
+  #define BL_LIFT_INIT_ANGLE 90
+  #define BL_KNEE_INIT_ANGLE 90
 //#endif
 
 #ifdef NORMAL
