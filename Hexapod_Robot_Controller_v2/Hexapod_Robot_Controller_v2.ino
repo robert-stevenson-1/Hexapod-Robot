@@ -157,6 +157,7 @@ void loop() {
       // move the leg closer to their target positions. Returns true then targets are met
       if(updateLegs()){
         //Serial.println("Moving Forward point");
+        /*
         Serial.print("x: ");
         Serial.print(atoi(comData[1]));
         Serial.print(" | y: ");
@@ -169,6 +170,7 @@ void loop() {
         Serial.print(moving);
         Serial.print(" | moveDone: ");
         Serial.print(moveDone);     
+        */
         // increment the current stage in the walk cycle if all the legs have met their target positions
         stage++;
         Serial.print(" | Cur Stage: ");
@@ -256,9 +258,14 @@ void getCommand(){
         moveLegIK(targetAngles[5], &bl, atoi(comData[1]), atoi(comData[2]), atoi(comData[3]));
         break;
       case R: // 7 // Move the whole robot
-        Serial.println("R");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0); 
-        moving = true;
+        Serial.println(" R");
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), -1); 
+        moveLeg(&fr, targetAngles[0][0], targetAngles[0][1], targetAngles[0][2]);
+        moveLeg(&mr, targetAngles[1][0], targetAngles[1][1], targetAngles[1][2]);
+        moveLeg(&br, targetAngles[2][0], targetAngles[2][1], targetAngles[2][2]);
+        moveLeg(&fl, targetAngles[3][0], targetAngles[3][1], targetAngles[3][2]);
+        moveLeg(&ml, targetAngles[4][0], targetAngles[4][1], targetAngles[4][2]);
+        moveLeg(&bl, targetAngles[5][0], targetAngles[5][1], targetAngles[5][2]);
         break;
       case 8:
         Serial.println("Stage Select");
@@ -543,7 +550,7 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z) {
   float newX = leg->feetPos_X + x;
   float newY = leg->feetPos_Y + y;
   float newZ = leg->feetPos_Z + z;
- 
+  /*
   Serial.print("x: ");
   Serial.print(x);
   Serial.print(" | y: ");
@@ -556,7 +563,7 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z) {
   Serial.print(newY);
   Serial.print(" | newZ: ");
   Serial.println(newZ);
-  
+  */
   float L1 = sqrt(powf(newX, 2) + powf(newZ, 2));
   float L2 = sqrt(powf((L1 - OFFSET_LENGTH), 2) + powf(newY, 2));
 /*
