@@ -1,62 +1,52 @@
 import socket
+import threading
 
-class Server:
-    def __init__(self):
-        self.name = "Server"
-        # create the server socket
-        self.soc = socket.socket()
-        # set the port of the server
-        self.port = 40674
-        # bind the socket the the port (No IP set)
-        self.soc.bind(('', self.port))
+HEADER = 128  # Message length from the client to the server
 
-    def serverRun(self):
-        # put the server's socket into listening mode
-        self.soc.listen(5)
-        print("Server Listening on Port: %s" % self.port)
-        while True:
-            client, addr = self.soc.accept()
-            print("Got a connecting from", addr)
-
-            # send a message to the client
-            client.send(b"Hello from the server")
-
-            # close the client connection
-            client.close()
+SERVER = socket.gethostbyname(socket.gethostname())
+# set the port of the server
+PORT = 5050
+# get the host IP address
+ADDRESS = (SERVER, PORT)
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
+# create the server
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# bind the socket the address
+server.bind(ADDRESS)
 
 
-"""
-    def bind(self, address):
-        self.socket.bind(address=address)
+def handleClient(client, addr):
+    print("Server:> New connection from {0}".format(addr))
 
-    def listen(self, backlog):
-        self.socket.listen(__backlog=backlog)
+    connected = True
+    # while true receive data from the client
+    while connected:
+        msgLength = client.recv(HEADER).decode(FORMAT)  # Wait for a message from the client
+        if msgLength:
+            msgLength = int(msgLength)
+            msg = client.recv(msgLength).decode(FORMAT)
+            if msg == DISCONNECT_MESSAGE:
+                connected = False
+            print("Client<{0}>:> {1}".format(addr[0], msg))
+            client.send("Message Received".encode(FORMAT))
+    client.close()
 
-    def accept(self):
-        self.socket.accept()
 
-    def connect(self, address):
-        self.socket.connect(address=address)
+def start():
+    # put the server's socket into listening mode
+    server.listen()
+    print("Server:> Listening on: {0}:{1}) ".format(SERVER, PORT))
+    while True:
+        client, addr = server.accept()
+        thread = threading.Thread(target=handleClient, args=(client, addr))
+        thread.start()
+        # print the number of active connections (Based on the number of client connections that are being processed)
+        print("Server:> ACTIVE CONNECTIONS {0}".format(threading.activeCount() - 1))
+        # send a message to the client
+        client.send(b"Hello from the server")
 
-    def sendTCP(self, data, flags):
-        self.socket.send(data=data, flags=flags)
 
-    def sendUDP(self, data, flags):
-        self.socket.sendto(data=data, flags=flags)
 
-    def ReceiveTCP(self, bufsize, flags):
-        self.socket.recv(bufsize=bufsize, flags=flags)
-
-    def ReceiveUDP(self, bufsize, flags):
-        self.socket.recvfrom(bufsize=bufsize, flags=flags)
-
-    def close(self):
-        self.socket.close()
-
-    def getHostName(self):
-        return gethostname()
-"""
 if __name__ == '__main__':
-    server = Server()
-    print(str(server.soc))
-    server.serverRun()
+    start()

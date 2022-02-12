@@ -1,25 +1,31 @@
 import socket
-import threading
 
-class Client:
-    def __init__(self):
-        self.name = "Client"
-        # create the server socket
-        self.socket = socket.socket()
-        # set the port of the server
-        self.port = 40674
-        self.address = '127.0.0.1'
+HEADER = 128  # Message length from communication
+SERVER = socket.gethostbyname(socket.gethostname())
+PORT = 5050  # set the port to connect on
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
+SERVER = "192.168.56.1"
+ADDRESS = (SERVER, PORT)
 
-    def startClient(self):
-        # connect to the server on local computer
-        self.socket.connect((self.address, self.port))
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDRESS)
 
-        # receive data from the server
-        print(self.socket.recv(1024))
+def send(msg):
+    message = msg.encode(FORMAT)
+    msgLength = len(message)
+    sendLen = str(msgLength).encode(FORMAT)
+    sendLen += b' ' * (HEADER - len(sendLen))
+    client.send(sendLen)
+    client.send(message)
+    print(client.recv(2048))
 
-        # close the connection
-        self.socket.close()
+def start():
+    send("HELLO WORLD")
+    send("THis is a secound message")
+    send("<9 0 0 50 0>")
+    send(DISCONNECT_MESSAGE)
+
 
 if __name__ == '__main__':
-    client = Client()
-    client.startClient()
+    start()
