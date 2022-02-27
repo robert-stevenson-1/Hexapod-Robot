@@ -48,29 +48,29 @@
 
 // === LEG SERVO INTIAL POSITIONS ===
   //1
-  #define FR_X cos(60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
-  #define FR_Y TIBIA_LENGTH
-  #define FR_Z sin(60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define FR_X sin(54*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define FR_Y cos(54*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define FR_Z TIBIA_LENGTH
   //2  
   #define MR_X OFFSET_LENGTH + FEMUR_LENGTH
-  #define MR_Y TIBIA_LENGTH
-  #define MR_Z 0
+  #define MR_Y 0
+  #define MR_Z TIBIA_LENGTH
   //3
-  #define BR_X cos(60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
-  #define BR_Y TIBIA_LENGTH
-  #define BR_Z sin(-60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define BR_X cos(54*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define BR_Z TIBIA_LENGTH
+  #define BR_Y sin(-54*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
   //6
-  #define FL_X -cos(60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
-  #define FL_Y TIBIA_LENGTH
-  #define FL_Z sin(60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define FL_X -cos(53*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define FL_Z TIBIA_LENGTH
+  #define FL_Y sin(54*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
   //5
   #define ML_X -(OFFSET_LENGTH + FEMUR_LENGTH)
-  #define ML_Y TIBIA_LENGTH
-  #define ML_Z 0
+  #define ML_Z TIBIA_LENGTH
+  #define ML_Y 0
   //4
-  #define BL_X -cos(60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
-  #define BL_Y TIBIA_LENGTH
-  #define BL_Z sin(-60*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define BL_X -cos(54*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
+  #define BL_Z TIBIA_LENGTH
+  #define BL_Y sin(-54*PI/180)*(OFFSET_LENGTH + FEMUR_LENGTH)
 
   #define FR_ROTATE_INIT_ANGLE 90
   #define FR_LIFT_INIT_ANGLE 90
@@ -149,7 +149,7 @@
   
   #define BL_ROTATE_INIT_ANGLE 90
   #define BL_LIFT_INIT_ANGLE 90
-  #define BL_KNEE_INIT_ANGLE ,0
+  #define BL_KNEE_INIT_ANGLE 90
 
 #endif
 
