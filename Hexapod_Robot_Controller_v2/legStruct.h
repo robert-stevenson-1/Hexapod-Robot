@@ -22,5 +22,7 @@ struct leg{
   
   float bodyOffsetX;
   float bodyOffsetZ;
+
+  int hipOffsetAngle;
 };
 #endif
