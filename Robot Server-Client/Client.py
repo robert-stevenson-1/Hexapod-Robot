@@ -1,11 +1,10 @@
 import socket
 
 HEADER = 128  # Message length from communication
-SERVER = socket.gethostbyname(socket.gethostname())
 PORT = 5050  # set the port to connect on
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
-SERVER = "192.168.56.1"
+SERVER = 'HEXAPOD' # "192.168.1.202"
 ADDRESS = (SERVER, PORT)
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
