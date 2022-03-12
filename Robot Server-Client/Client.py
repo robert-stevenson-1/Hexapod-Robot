@@ -4,7 +4,7 @@ HEADER = 128  # Message length from communication
 PORT = 5050  # set the port to connect on
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
-SERVER = 'HEXAPOD' # "192.168.1.202"
+SERVER = "192.168.1.202"  # 'HEXAPOD'
 ADDRESS = (SERVER, PORT)
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,9 +25,25 @@ def start():
         msg = input("Client:> ")
         if 'exit' in msg:
             connected = False
+            send(DISCONNECT_MESSAGE)
             return
         send(msg)
 
 
 if __name__ == '__main__':
     start()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
