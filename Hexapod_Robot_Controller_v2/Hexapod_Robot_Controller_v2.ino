@@ -458,9 +458,9 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
       moveLegIK(targetAngles[2], &br, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[4], &ml, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
       //set 2
-      moveLegIK(targetAngles[1], &mr, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[1], &mr, -x, 0, -z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[3], &fl, -x, 0, -z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[5], &bl, -x, 0, -z, rotX, rotY, rotZ);
       break;
     case 2: 
       Serial.println("Set 1 down");
@@ -609,13 +609,13 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z, float rotX, fl
 //  float a2 = (powf(FEMUR_LENGTH, 2) + powf(L23, 2) - powf(TIBIA_LENGTH, 2)) / (2 * FEMUR_LENGTH * L23);
 //  float a3 = (powf(FEMUR_LENGTH, 2) + powf(TIBIA_LENGTH, 2) - powf(L23, 2)) / (2 * TIBIA_LENGTH * FEMUR_LENGTH);
 
-  if (sqrt(sq(newX) + sq (newY) +sq(newZ)) > FEMUR_LENGTH + TIBIA_LENGTH){
-    retData[0] = hipAngle + leg->hipOffsetAngle;
-    retData[1] = 90;
-    retData[2] = 90;
-    Serial.println("ERROR: Co-ordinate too far!!");
-    return;
-  }
+//  if (sqrt(sq(newX) + sq (newY) +sq(newZ)) > FEMUR_LENGTH + TIBIA_LENGTH){
+//    retData[0] = hipAngle + leg->hipOffsetAngle;
+//    retData[1] = 90;
+//    retData[2] = 90;
+//    Serial.println("ERROR: Co-ordinate too far!!");
+//    return;
+//  }
   
   float a1 = atan((L1 - OFFSET_LENGTH)/newY) * 180/PI;
   float a2 = acos((powf(TIBIA_LENGTH, 2) - powf(L2, 2) - powf(FEMUR_LENGTH, 2)) / (-2 * FEMUR_LENGTH * L2)) * 180/PI;
