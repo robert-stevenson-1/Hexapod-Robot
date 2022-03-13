@@ -441,6 +441,7 @@ bool updateLegs(){
 }
 
 void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
+    y *= -1;
     switch(stage){
     case 0:
       Serial.println("Set 1 up");
@@ -608,8 +609,8 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z, float rotX, fl
 //  float a2 = (powf(FEMUR_LENGTH, 2) + powf(L23, 2) - powf(TIBIA_LENGTH, 2)) / (2 * FEMUR_LENGTH * L23);
 //  float a3 = (powf(FEMUR_LENGTH, 2) + powf(TIBIA_LENGTH, 2) - powf(L23, 2)) / (2 * TIBIA_LENGTH * FEMUR_LENGTH);
 
-  if (sqrt(sq(x) + sq (y) +sq(z)) > FEMUR_LENGTH + TIBIA_LENGTH){
-    retData[0] = hipAngle;
+  if (sqrt(sq(newX) + sq (newY) +sq(newZ)) > FEMUR_LENGTH + TIBIA_LENGTH){
+    retData[0] = hipAngle + leg->hipOffsetAngle;
     retData[1] = 90;
     retData[2] = 90;
     Serial.println("ERROR: Co-ordinate too far!!");
@@ -630,7 +631,7 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z, float rotX, fl
 
   hipAngle += leg->hipOffsetAngle;
   int liftAngle = (int)(a1 + a2);
-  int kneeAngle = (int) 180-a3;
+  int kneeAngle = 180 - (int) a3;
 
 #ifdef DEBUG
 
