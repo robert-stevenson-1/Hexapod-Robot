@@ -7,13 +7,14 @@
 #include "RobotConfig.h"
 #include "Communication.h"
 
+#define DEBUG
 
 // ======================
 // =========CONST========
 // ======================
 
 #define WRITE_INTERVAL 50 //0.5 sec
-#define MAX_STAGES 11 // Num of stages in the gait to complete a full cycle
+#define MAX_STAGES 6 // Num of stages in the gait to complete a full cycle
 #define LIFT_OFFSET -50 //mm
 
 // ======================
@@ -442,81 +443,51 @@ bool updateLegs(){
 void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
     switch(stage){
     case 0:
-      Serial.println("All legs down (Reset)");
-      //set 1
-      moveLegIK(targetAngles[0], &fr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, 0, 0, 0, rotX, rotY, rotZ);
-      //set 2
-      moveLegIK(targetAngles[1], &mr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, 0, 0, 0, rotX, rotY, rotZ); 
-      break;
-    case 1:
       Serial.println("Set 1 up");
       //set 1
       moveLegIK(targetAngles[0], &fr, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
       moveLegIK(targetAngles[2], &br, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
       moveLegIK(targetAngles[4], &ml, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
       break;
-    case 2: 
-      Serial.println("Set 1 up move");
+    case 1: 
+      Serial.print("Set 1 up move");
+      Serial.println(" Set 2 move (other dir)");
       //set 1
       moveLegIK(targetAngles[0], &fr, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[2], &br, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[4], &ml, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
+      //set 2
+      moveLegIK(targetAngles[1], &mr, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[3], &fl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[5], &bl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
       break;
-    case 3: 
+    case 2: 
       Serial.println("Set 1 down");
       //set 1
       moveLegIK(targetAngles[0], &fr, x, 0, z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[2], &br, x, 0, z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[4], &ml, x, 0, z, rotX, rotY, rotZ);
       break;
-    case 4: 
+    case 3: 
       Serial.println("Set 2 up");
       //set 2
-      moveLegIK(targetAngles[1], &mr, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[1], &mr, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[3], &fl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[5], &bl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
       break;
-    case 5: 
-      Serial.println("Set 1 down move");
+    case 4: 
+      Serial.println("Set 1 move");
       //set 1
       moveLegIK(targetAngles[0], &fr, 0, 0, 0, rotX, rotY, rotZ);
       moveLegIK(targetAngles[2], &br, 0, 0, 0, rotX, rotY, rotZ);
       moveLegIK(targetAngles[4], &ml, 0, 0, 0, rotX, rotY, rotZ);
-      break;
-    case 6: 
-      Serial.println("Set 2 up move");
       //set 2
-      moveLegIK(targetAngles[1], &mr, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
-      break; 
-    case 7:
-      Serial.println("Set 2 Down");
-      //set 2
-      moveLegIK(targetAngles[1], &mr, x, 0, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, x, 0, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, x, 0, z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[1], &mr, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[3], &fl, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[5], &bl, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ); 
       break;
-    case 8:
-      Serial.println("Set 1 up");
-      //set 1
-      moveLegIK(targetAngles[0], &fr, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      break;
-    case 9:
-      Serial.println("Set 2 Forward");
-      //set 2
-      moveLegIK(targetAngles[1], &mr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, 0, 0, 0, rotX, rotY, rotZ);
-      break;
-    case 10:
-      Serial.println("All legs down (Reset)");
+    case 5:
+      Serial.println("All legs down (Reset) (Stage 5)");
       //set 1
       moveLegIK(targetAngles[0], &fr, 0, 0, 0, rotX, rotY, rotZ);
       moveLegIK(targetAngles[2], &br, 0, 0, 0, rotX, rotY, rotZ);
@@ -526,6 +497,19 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
       moveLegIK(targetAngles[3], &fl, 0, 0, 0, rotX, rotY, rotZ);
       moveLegIK(targetAngles[5], &bl, 0, 0, 0, rotX, rotY, rotZ); 
       break;
+      /*
+    case 6:
+      Serial.println("All legs down (Reset) (Stage 6)");
+      //set 1
+      moveLegIK(targetAngles[0], &fr, 0, 0, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[2], &br, 0, 0, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[4], &ml, 0, 0, 0, rotX, rotY, rotZ);
+      //set 2
+      moveLegIK(targetAngles[1], &mr, 0, 0, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[3], &fl, 0, 0, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[5], &bl, 0, 0, 0, rotX, rotY, rotZ); 
+      break;
+*/
     default:
       Serial.println("Gait Default");
       //set 2
