@@ -4,7 +4,7 @@
 //Comm Data
 const byte maxData = 128;
 char data[maxData];
-char *comData[5];
+char *comData[8];
 char outboundData[maxData];
 bool newData = false;
 

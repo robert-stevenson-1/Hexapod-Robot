@@ -1,4 +1,3 @@
-#include <MPU6050.h>
 #include <HCSR04.h>
 #include <math.h>
 //#include <Servo.h>
@@ -42,11 +41,6 @@ enum comID{
 //ultrasonic distance sensor
 double distance = 0;
 
-//Gyro and Accelerometer data
-MPU6050 mpu;
-int16_t ax, ay, az;
-int16_t gx, gy, gz;
-
 //Robot head Servos
 Servo headRotate;
 Servo headLift;
@@ -78,13 +72,11 @@ void setup() {
   Serial.begin(115200);
   Serial.flush();
   Serial.setTimeout(1000);
+  Serial.println("Robot Starting...");
+  delay(500);
 
   //Setup the ultrasonic sensor
   HCSR04.begin(TRIG_PIN, ECHO_PIN);
-
-  //setup the MPU6050
-  Wire.begin();
-  mpu.initialize();
 
   // === ATTACH SERVOS ==
   attachServos();
@@ -119,8 +111,6 @@ void setup() {
   #endif
   // ==================================
 
-//  Serial.println("ax ay "); //az
-//  Serial.println("gx gy gz");
   clearInputBuffer();
 }
 
@@ -135,7 +125,11 @@ void loop() {
   getData(); //MOVE THIS TO THE ELSE OF THE IF COND BELOW    
   //after getting new data parse it as a command, only when the robot isn't in the middle of moving
   if(newData == true && moving == false){
-    //Serial.println(data);
+    #ifdef DEBUG
+    Serial.println("==========================");
+    Serial.print("Data: ");
+    Serial.println(data);
+    #endif
     //parse the data to a command and execute the command (Command will be related to moving the robot)
     getCommand();    
   }
@@ -149,8 +143,7 @@ void loop() {
     // save the last time we wrote
     previousMillis = currentMillis;
     if(moving == true){
-
-            
+        
       // move the leg closer to their target positions. Returns true then targets are met
       if(updateLegs()){
         //Serial.println("Moving Forward point");
@@ -176,7 +169,7 @@ void loop() {
         }
         
         // get the next gait stage values
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, stage);
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), stage);
         Serial.print(" | Cur Stage: ");
         Serial.println(stage);
         //flag the whole movement operation as over by setting the moving flag to false, and seting the moveDone flag too
@@ -197,26 +190,8 @@ void loop() {
     }
   }
   
-  /*
   // put your main code here, to run repeatedly:
   //distance = *(HCSR04.measureDistanceCm());
-
-  //Serial.println(robot.getBl().getHipRotate().attached());
-  //get balance data
-  //getBalanceData();
-  // mpu print data
-
-    Serial.print(mpu.getAccelerationX());
-    Serial.print(" ");
-    Serial.println(mpu.getAccelerationY());  
-    Serial.print(" ");
-    Serial.print(mpu.getRotationX());
-    Serial.print(" ");
-    Serial.print(mpu.getRotationY());
-    Serial.print(" ");
-    Serial.print(mpu.getRotationZ());
-    Serial.print(" ");
-  */
   
   //Reset fetched data
   if(newData == true && moving == false){ //RESET ONLY THEN THE COMMAND IS FINISHED EXECUTING
@@ -232,50 +207,67 @@ void getCommand(){
     // Example of Command: <1 0 -25 0> (leg: 1(FR) | X: 0 | Y: -25 | Z: 0 | Stage: ~)
     // Example of Command: <8 ~ ~ ~ 0> (Gait Stage | X: ~ | Y: ~ | Z: ~ | Stage: 0)
     //  ~ : ANY INT VALUE (we don't care much for that value based on the command we are doing)
-    getComData(data, comData, 5, " ");
-    
-    /*
-    for(int i = 0; i < 5; i++){
+    getComData(data, comData, 8, " ");
+
+    #ifdef DEBUG
+    Serial.print("getCommand:\n   ");
+    for(int i = 0; i < 8; i++){
       Serial.print(" | ");
-      Serial.print(comData[i]);
+      Serial.print(atoi((char *)comData[i]));
     }
-    */
+    Serial.print(" comData[0]: ");
+    Serial.println(comData[0]);
+    #endif
     
     //Execute the command that was collected
     switch(atoi(comData[0])){
       case FR: // 1
-        //Serial.println("FR");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, -1); 
+      #ifdef DEBUG
+        Serial.println("FR");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), -1); 
         moveLeg(&fr, targetAngles[0][0], targetAngles[0][1], targetAngles[0][2]);
         break;
       case MR: // 2
-        //Serial.println("MR");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, -1); 
+      #ifdef DEBUG
+        Serial.println("MR");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), -1); 
         moveLeg(&mr, targetAngles[1][0], targetAngles[1][1], targetAngles[1][2]);
         break;
       case BR: // 3
-        //Serial.println("BR");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, -1); 
+      #ifdef DEBUG
+        Serial.println("BR");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), -1); 
         moveLeg(&br, targetAngles[2][0], targetAngles[2][1], targetAngles[2][2]);
         break;
       case FL: // 4
-        //Serial.println("FL");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, -1); 
+      #ifdef DEBUG
+        Serial.println("FL");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), -1); 
         moveLeg(&fl, targetAngles[3][0], targetAngles[3][1], targetAngles[3][2]);
         break;
       case ML: // 5
-        //Serial.println("ML");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, -1); 
+      #ifdef DEBUG
+        Serial.println("ML");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), -1); 
         moveLeg(&ml, targetAngles[4][0], targetAngles[4][1], targetAngles[4][2]);
         break;
       case BL: // 6 
-        //Serial.println("BL");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, -1); 
+      #ifdef DEBUG
+        Serial.println("BL");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), -1); 
         moveLeg(&bl, targetAngles[5][0], targetAngles[5][1], targetAngles[5][2]);
         break;
       case R: // 7 // Move the whole robot
-        //Serial.println(" R");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, -1); 
+      #ifdef DEBUG
+        Serial.println(" R");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), -1); 
 
         moveLeg(&fr, targetAngles[0][0], targetAngles[0][1], targetAngles[0][2]);
         moveLeg(&mr, targetAngles[1][0], targetAngles[1][1], targetAngles[1][2]);
@@ -285,8 +277,10 @@ void getCommand(){
         moveLeg(&bl, targetAngles[5][0], targetAngles[5][1], targetAngles[5][2]);
         break;
       case 8:
-        //Serial.println("Stage Select");
-        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), 0, 0, 0, atoi(comData[4]));
+      #ifdef DEBUG
+        Serial.println("Stage Select");
+      #endif
+        gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), atoi(comData[7]));
         moveLeg(&fr, targetAngles[0][0], targetAngles[0][1], targetAngles[0][2]);
         moveLeg(&mr, targetAngles[1][0], targetAngles[1][1], targetAngles[1][2]);
         moveLeg(&br, targetAngles[2][0], targetAngles[2][1], targetAngles[2][2]);
@@ -295,6 +289,9 @@ void getCommand(){
         moveLeg(&bl, targetAngles[5][0], targetAngles[5][1], targetAngles[5][2]);
         break;
       case 9:
+      #ifdef DEBUG
+        Serial.println("Gait Movement");
+      #endif
         moving = true;
         break;
       default:
@@ -339,7 +336,7 @@ void attachServos() {
   br.feetPos_Y = BR_Y;
   br.feetPos_Z = BR_Z;
   br.bodyOffsetX = BODY_CENTER_OFFSET_1;
-  br.bodyOffsetZ = -BODY_CENTER_OFFSET_2;
+  br.bodyOffsetZ = BODY_CENTER_OFFSET_2;
   br.hipOffsetAngle = -60;
   delay(20);
 
@@ -353,7 +350,7 @@ void attachServos() {
   fl.feetPos_X = FL_X;
   fl.feetPos_Y = FL_Y;
   fl.feetPos_Z = FL_Z;
-  fl.bodyOffsetX = -BODY_CENTER_OFFSET_1;
+  fl.bodyOffsetX = BODY_CENTER_OFFSET_1;
   fl.bodyOffsetZ = BODY_CENTER_OFFSET_2;
   fl.hipOffsetAngle = -60;
   delay(20);
@@ -366,7 +363,7 @@ void attachServos() {
   ml.feetPos_X = ML_X;
   ml.feetPos_Y = ML_Y;
   ml.feetPos_Z = ML_Z;
-  ml.bodyOffsetX = -BODY_SIDE_LENGTH;
+  ml.bodyOffsetX = BODY_SIDE_LENGTH;
   ml.bodyOffsetZ = 0;
   ml.hipOffsetAngle = 0;
   delay(20);
@@ -379,8 +376,8 @@ void attachServos() {
   bl.feetPos_X = BL_X;
   bl.feetPos_Y = BL_Y;
   bl.feetPos_Z = BL_Z;
-  bl.bodyOffsetX = -BODY_CENTER_OFFSET_1;
-  bl.bodyOffsetZ = -BODY_CENTER_OFFSET_2;
+  bl.bodyOffsetX = BODY_CENTER_OFFSET_1;
+  bl.bodyOffsetZ = BODY_CENTER_OFFSET_2;
   bl.hipOffsetAngle = 60;
   delay(20);
 
@@ -441,22 +438,23 @@ bool updateLegs(){
 }
 
 void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
+  // <7 0 0 0 0 0 0 0>
     y *= -1;
     switch(stage){
     case 0:
       Serial.println("Set 1 up");
       //set 1
-      moveLegIK(targetAngles[0], &fr, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[0], &fr, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
+      moveLegIK(targetAngles[2], &br, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
+      moveLegIK(targetAngles[4], &ml, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
       break;
     case 1: 
       Serial.print("Set 1 up move");
       Serial.println(" Set 2 move (other dir)");
       //set 1
-      moveLegIK(targetAngles[0], &fr, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, x, LIFT_OFFSET + y, z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[0], &fr, x, LIFT_OFFSET + y, z, rotX, -rotY, rotZ);
+      moveLegIK(targetAngles[2], &br, x, LIFT_OFFSET + y, z, rotX, -rotY, rotZ);
+      moveLegIK(targetAngles[4], &ml, x, LIFT_OFFSET + y, z, rotX, -rotY, rotZ);
       //set 2
       moveLegIK(targetAngles[1], &mr, -x, 0, -z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[3], &fl, -x, 0, -z, rotX, rotY, rotZ);
@@ -465,9 +463,9 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
     case 2: 
       Serial.println("Set 1 down");
       //set 1
-      moveLegIK(targetAngles[0], &fr, x, 0, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, x, 0, z, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, x, 0, z, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[0], &fr, x, 0, z, rotX, -rotY, rotZ);
+      moveLegIK(targetAngles[2], &br, x, 0, z, rotX, -rotY, rotZ);
+      moveLegIK(targetAngles[4], &ml, x, 0, z, rotX, -rotY, rotZ);
       break;
     case 3: 
       Serial.println("Set 2 up");
@@ -479,24 +477,24 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
     case 4: 
       Serial.println("Set 1 move");
       //set 1
-      moveLegIK(targetAngles[0], &fr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, 0, 0, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[0], &fr, 0, 0, 0, 0, 0, 0);
+      moveLegIK(targetAngles[2], &br, 0, 0, 0, 0, 0, 0);
+      moveLegIK(targetAngles[4], &ml, 0, 0, 0, 0, 0, 0);
       //set 2
-      moveLegIK(targetAngles[1], &mr, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, 0, LIFT_OFFSET + y, 0, rotX, rotY, rotZ); 
+      moveLegIK(targetAngles[1], &mr, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
+      moveLegIK(targetAngles[3], &fl, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
+      moveLegIK(targetAngles[5], &bl, 0, LIFT_OFFSET + y, 0, 0, 0, 0); 
       break;
     case 5:
       Serial.println("All legs down (Reset) (Stage 5)");
       //set 1
-      moveLegIK(targetAngles[0], &fr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, 0, 0, 0, rotX, rotY, rotZ);
+      moveLegIK(targetAngles[0], &fr, 0, 0, 0, 0, 0, 0);
+      moveLegIK(targetAngles[2], &br, 0, 0, 0, 0, 0, 0);
+      moveLegIK(targetAngles[4], &ml, 0, 0, 0, 0, 0, 0);
       //set 2
-      moveLegIK(targetAngles[1], &mr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, 0, 0, 0, rotX, rotY, rotZ); 
+      moveLegIK(targetAngles[1], &mr, 0, 0, 0, 0, 0, 0);
+      moveLegIK(targetAngles[3], &fl, 0, 0, 0, 0, 0, 0);
+      moveLegIK(targetAngles[5], &bl, 0, 0, 0, 0, 0, 0); 
       break;
       /*
     case 6:
@@ -541,28 +539,41 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z, float rotX, fl
 //  Serial.print(" | feetZ: ");
 //  Serial.println(leg->feetPos_Z);
 
-//BODY IK
+////BODY IK
+//
+//  float TotalX = x + leg->feetPos_X;// + leg->bodyOffsetX;
+//  float TotalZ = z + leg->feetPos_Z;// + leg->bodyOffsetZ;
+//  
+//  float bodyCenFootDist = sqrt(powf(TotalX, 2) + powf(TotalZ, 2));
+//  float bodyCenterAngle = PI/2 - (atan(TotalZ/TotalX));
+//
+//  float rollY = tan(rotY*PI/180) * TotalX;
+//  float pitchY = tan(rotX*PI/180) * TotalZ;
+//
+//  float BodyIKX = (cos((rotZ * PI/180)) * bodyCenFootDist) - TotalX;
+//  float BodyIKY = rollY + pitchY;
+//  float BodyIKZ = (sin((rotZ  * PI/180)) * bodyCenFootDist) - TotalZ;
+//  
+//#ifdef DEBUG
+//
+//  Serial.print("  BodyIKX: ");
+//  Serial.print(BodyIKX);
+//  Serial.print(" | BodyIKY: ");
+//  Serial.print(BodyIKY);
+//  Serial.print(" | BodyIKZ: ");
+//  Serial.println(BodyIKZ);
+//#endif
 
-  float TotalX = x + leg->feetPos_X + leg->bodyOffsetX;
-  float TotalZ = z + leg->feetPos_Z + leg->bodyOffsetZ;
-  
-  float bodyCenFootDist = sqrt(powf(TotalX, 2) + powf(TotalZ, 2));
-  float bodyCenterAngle = 90 - (int)(atan(TotalZ/TotalX) * 180/PI);
+// ROTATION CHANGES
 
-  float rollY = tan(rotY*PI/180) * TotalX;
-  float pitchY = tan(rotX*PI/180) * TotalZ;
 
-  float BodyIKX = cos(bodyCenterAngle + (rotZ * PI/180)) * bodyCenFootDist - TotalX;
-  float BodyIKY = rollY + pitchY;
-  float BodyIKZ = (sin(bodyCenterAngle + (rotZ  * PI/180)) * bodyCenFootDist) - TotalZ;
-  
 //LEG IK
   float newX = x + leg->feetPos_X;// + BodyIKX;
   float newY = y + leg->feetPos_Y;// + BodyIKY;
   float newZ = z + leg->feetPos_Z;// + BodyIKZ;
 
-  /*
-  Serial.print("x: ");
+#ifdef DEBUG
+  Serial.print("    x: ");
   Serial.print(x);
   Serial.print(" | y: ");
   Serial.print(y);
@@ -575,7 +586,8 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z, float rotX, fl
   Serial.print(newY);
   Serial.print(" | newZ: ");
   Serial.println(newZ);
-   */ 
+#endif
+
   float L1 = sqrt(powf(newX, 2) + powf(newZ, 2));
   float L2 = sqrt(powf((L1 - OFFSET_LENGTH), 2) + powf(newY, 2));
 
@@ -629,9 +641,9 @@ void moveLegIK(int *retData, leg *leg, float x, float y, float z, float rotX, fl
   Serial.println(a3);
    */
 
-  hipAngle += leg->hipOffsetAngle;
+  hipAngle += leg->hipOffsetAngle + rotY;
   int liftAngle = (int)(a1 + a2);
-  int kneeAngle = 180 - (int) a3;
+  int kneeAngle = 180 - (int)a3;
 
 #ifdef DEBUG
 
@@ -696,11 +708,4 @@ void moveLeg(leg *leg, int rotateAngle, int liftAngle, int kneeAngle) {
   leg.kneeAngle = knee.read();
   delay(SERVO_WRITE_DELAY);
   */
-}
-
-void getBalanceData() {
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  //ax = map(ax, -17000, 17000, 0, 255 ); // X axis data
-  //ay = map(ay, -17000, 17000, 0, 255); // Y axis data
-  //az = map(az, -17000, 17000, 0, 255);  // Z axis data
 }
