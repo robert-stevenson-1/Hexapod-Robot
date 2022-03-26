@@ -54,15 +54,13 @@ def start():
             raw_msg = input("Client:> ")
             # tokenize the raw input
             msg_tokens = raw_msg.split()
-
             # get the command
             cmd = msg_tokens[0]
             # get the argument from the commands
             args = msg_tokens[1:]
-
             # check if a valid command was entered
             if cmd in commands:
-                # Call the function in the commands dictionary and store any values that could be returned
+                # get the full command from the commands dictionary
                 to_send = commands[cmd]
                 # check if the command entered was the 'exit' cmd
                 if to_send == -1:
