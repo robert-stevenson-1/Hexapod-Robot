@@ -7,6 +7,7 @@ FORMAT = 'utf-8'  # message format used for sending and receiving data via the s
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # Sever address on the network
 SERVER = "192.168.1.202"  # 'HEXAPOD'
+# SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
 ADDRESS = (SERVER, PORT)
 
 # setup the socket
@@ -14,7 +15,7 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # control var for telling if the client is still connected
 connected = True
-
+can_send = True
 # short handle commands dictionary
 commands = {
     "ABS_HAT0Y-1": "<9 0 0 40 0 0 0>",  # Move Forwards
@@ -36,14 +37,20 @@ def client_exit():
 
 
 def send(msg):
+    #global can_send
+    #check if we are allowed to send
+    #if can_send:
+    can_send = False
     message = msg.encode(FORMAT)
     msgLength = len(message)
     sendLen = str(msgLength).encode(FORMAT)
     sendLen += b' ' * (HEADER - len(sendLen))
     client.send(sendLen)
     client.send(message)
-    print(client.recv(2048).decode(FORMAT))
-
+    received = client.recv(2048).decode(FORMAT)
+    if len(received) > 0:
+        #can_send = True
+        print(received)
 
 def start():
     try:

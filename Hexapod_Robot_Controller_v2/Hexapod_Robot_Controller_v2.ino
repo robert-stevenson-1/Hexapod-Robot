@@ -6,7 +6,7 @@
 #include "RobotConfig.h"
 #include "Communication.h"
 
-#define DEBUG
+//#define DEBUG
 
 // ======================
 // =========CONST========
@@ -170,12 +170,15 @@ void loop() {
         
         // get the next gait stage values
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[5]), atoi(comData[6]), stage);
+        #ifdef DEBUG
         Serial.print(" | Cur Stage: ");
         Serial.println(stage);
+        #endif
         //flag the whole movement operation as over by setting the moving flag to false, and seting the moveDone flag too
         if(moveDone == true){
           moving = false;
           moveDone = false;
+          Serial.println("Mv Dn");
         }        
         // increment the current stage in the walk cycle if all the legs have met their target positions
         stage++;
@@ -442,15 +445,19 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
     y *= -1;
     switch(stage){
     case 0:
+      #ifdef DEBUG
       Serial.println("Set 1 up");
+      #endif
       //set 1
       moveLegIK(targetAngles[0], &fr, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
       moveLegIK(targetAngles[2], &br, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
       moveLegIK(targetAngles[4], &ml, 0, LIFT_OFFSET + y, 0, 0, 0, 0);
       break;
     case 1: 
+      #ifdef DEBUG
       Serial.print("Set 1 up move");
       Serial.println(" Set 2 move (other dir)");
+      #endif
       //set 1
       moveLegIK(targetAngles[0], &fr, x, LIFT_OFFSET + y, z, rotX, -rotY, rotZ);
       moveLegIK(targetAngles[2], &br, x, LIFT_OFFSET + y, z, rotX, -rotY, rotZ);
@@ -461,21 +468,27 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
       moveLegIK(targetAngles[5], &bl, -x, 0, -z, rotX, rotY, rotZ);
       break;
     case 2: 
+      #ifdef DEBUG
       Serial.println("Set 1 down");
+      #endif
       //set 1
       moveLegIK(targetAngles[0], &fr, x, 0, z, rotX, -rotY, rotZ);
       moveLegIK(targetAngles[2], &br, x, 0, z, rotX, -rotY, rotZ);
       moveLegIK(targetAngles[4], &ml, x, 0, z, rotX, -rotY, rotZ);
       break;
     case 3: 
+      #ifdef DEBUG
       Serial.println("Set 2 up");
+      #endif
       //set 2
       moveLegIK(targetAngles[1], &mr, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[3], &fl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
       moveLegIK(targetAngles[5], &bl, -x, LIFT_OFFSET + y, -z, rotX, rotY, rotZ);
       break;
     case 4: 
+      #ifdef DEBUG
       Serial.println("Set 1 move");
+      #endif
       //set 1
       moveLegIK(targetAngles[0], &fr, 0, 0, 0, 0, 0, 0);
       moveLegIK(targetAngles[2], &br, 0, 0, 0, 0, 0, 0);
@@ -486,7 +499,9 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
       moveLegIK(targetAngles[5], &bl, 0, LIFT_OFFSET + y, 0, 0, 0, 0); 
       break;
     case 5:
+      #ifdef DEBUG
       Serial.println("All legs down (Reset) (Stage 5)");
+      #endif
       //set 1
       moveLegIK(targetAngles[0], &fr, 0, 0, 0, 0, 0, 0);
       moveLegIK(targetAngles[2], &br, 0, 0, 0, 0, 0, 0);
@@ -496,21 +511,10 @@ void gait(int x, int y, int z, int rotX, int rotY, int rotZ, int stage){
       moveLegIK(targetAngles[3], &fl, 0, 0, 0, 0, 0, 0);
       moveLegIK(targetAngles[5], &bl, 0, 0, 0, 0, 0, 0); 
       break;
-      /*
-    case 6:
-      Serial.println("All legs down (Reset) (Stage 6)");
-      //set 1
-      moveLegIK(targetAngles[0], &fr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[2], &br, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[4], &ml, 0, 0, 0, rotX, rotY, rotZ);
-      //set 2
-      moveLegIK(targetAngles[1], &mr, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[3], &fl, 0, 0, 0, rotX, rotY, rotZ);
-      moveLegIK(targetAngles[5], &bl, 0, 0, 0, rotX, rotY, rotZ); 
-      break;
-*/
     default:
+      #ifdef DEBUG
       Serial.println("Gait Default");
+      #endif
       //set 2
       //Serial.println("MR");
       moveLegIK(targetAngles[1], &mr, x, y, z, rotX, rotY, rotZ);
