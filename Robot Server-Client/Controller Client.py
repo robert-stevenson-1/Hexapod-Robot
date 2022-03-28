@@ -17,13 +17,13 @@ connected = True
 
 # short handle commands dictionary
 commands = {
-    "MF": "<9 0 0 {0} 0 0 0>",  # Move Forwards
-    "MB": "<9 0 0 -{0} 0 0 0>",  # Move Backwards
-    "MR": "<9 {0} 0 0 0 0 0>",  # Move Right
-    "ML": "<9 -{0} 0 0 0 0 0>",  # Move Left
-    "RR": "<9 0 0 0 0 -{0} 0>",  # Rotate on the spot
-    "RL": "<9 0 0 0 0 {0} 0>",  # Rotate on the spot
-    "Exit": -1
+    "ABS_HAT0Y-1": "<9 0 0 40 0 0 0>",  # Move Forwards
+    "ABS_HAT0Y1": "<9 0 0 -40 0 0 0>",  # Move Backwards
+    "ABS_HAT0X1": "<9 40 0 0 0 0 0>",  # Move Right
+    "ABS_HAT0X-1": "<9 -40 0 0 0 0 0>",  # Move Left
+    "ABS_RZ255": "<9 0 0 0 0 -15 0>",  # Rotate on the spot
+    "ABS_Z255": "<9 0 0 0 0 15 0>",  # Rotate on the spot
+    "BTN_SELECT1": -1
 }
 
 def client_exit():
@@ -49,16 +49,21 @@ def start():
     try:
         client.connect(ADDRESS)  # Connect to the server
         global connected  # access the global var value
+
         # loop while connected
         while connected:
-            # get the user input
-            raw_msg = input("Client:> ")
-            # tokenize the raw input
-            msg_tokens = raw_msg.split()
-            # get the command
-            cmd = msg_tokens[0]
-            # get the argument from the commands
-            args = msg_tokens[1:]
+            cmd = ""
+            # get the controller events
+            events = get_gamepad()
+            for event in events:
+                # if event.code == 'ABS_HAT0X':
+                #     print(f'D-Pad x: {event.state}')
+                # elif event.code == 'ABS_HAT0Y':
+                #     print(f'D-Pad y: {event.state}')
+                # elif event.code != 'SYN_REPORT':
+                #     print('{0}, {1}'.format(event.code, event.state))
+                cmd = str(event.code) + str(event.state)
+            print("Command: " + cmd)
             # check if a valid command was entered
             if cmd in commands:
                 # get the full command from the commands dictionary
@@ -68,8 +73,8 @@ def start():
                     client_exit()
                     # exit the loop early
                     return
-                send(to_send.format(args[0]))
-                print('Sent: ' + to_send.format(args[0]))
+                send(to_send)
+                print('Sent: ' + to_send)
             else:
                 print("WARNING: Command not found")
     except socket.error as e:  # try triggered when connection timed out
