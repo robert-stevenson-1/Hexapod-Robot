@@ -6,7 +6,8 @@ PORT = 5050  # set the port to connect on
 FORMAT = 'utf-8'  # message format used for sending and receiving data via the socket connection
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # Sever address on the network
-SERVER = "192.168.1.202"  # 'HEXAPOD'
+# SERVER = "192.168.1.202"  # 'HEXAPOD'
+SERVER = "192.168.56.1"  #
 ADDRESS = (SERVER, PORT)
 
 # setup the socket
