@@ -381,64 +381,6 @@ void attachServos() {
 
 }
 
-bool updateLegs(){
-  int tally = 0;
-  //for each leg of the robot
-    for (int i = 0; i < 6; i++){
-      leg* l = legs[i]; //grab the address of the leg
-      // check if fast mode is set
-      if (!FAST_MODE){ 
-        //Slowly move the legs to position
-        
-        //hip servo of the leg
-        // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
-        if(l->curHip < targetAngles[i][0]){
-          l->curHip++;
-        }else if(l->curHip > targetAngles[i][0]){
-          l->curHip--;
-        }
-
-        // Lift servo of the leg
-        // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
-        if(l->curLift < targetAngles[i][1]){
-          l->curLift++;
-        }else if(l->curLift > targetAngles[i][1]){
-          l->curLift--;         
-        }
-  
-        // knee servo of the leg
-        // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
-        if(l->curKnee < targetAngles[i][2]){
-          l->curKnee++;
-        }else if(l->curKnee > targetAngles[i][2]){
-          l->curKnee--;        
-        }
-      }else{ // fast mode is set so instantly set the angle to the target so legs move instantly into position
-        l->curHip = targetAngles[i][0];
-        l->curLift = targetAngles[i][1];
-        l->curKnee = targetAngles[i][2];
-      }
-      //move the servos to the next position
-      moveLeg(l, l->curHip, l->curLift, l->curKnee);
-
-      //check if a leg has reached the target
-      if (l->curHip == targetAngles[i][0] && l->curLift == targetAngles[i][1] && l->curKnee == targetAngles[i][2]){
-        tally++; // increase the tally as a leg has reached its target
-      }
-  }
-
-  //if the tally == 6 then all the legs have been moved to the target so we have finished moving and return false (not moving)
-  if(tally == 6){
-    //Serial.print("Tally: ");
-    //Serial.println(tally);
-    return true;
-  }else{
-    return false;
-  }
-  
-  //Serial.println("Done updating Servos");
-}
-
 void gait(int x, int y, int z, int rotY, int stage){
   // <7 0 0 0 0 0 0 0>
     y *= -1;
@@ -532,6 +474,63 @@ void gait(int x, int y, int z, int rotY, int stage){
   }
 }
 
+bool updateLegs(){
+  int tally = 0;
+  //for each leg of the robot
+    for (int i = 0; i < 6; i++){
+      leg* l = legs[i]; //grab the address of the leg
+      // check if fast mode is set
+      if (!FAST_MODE){ 
+        //Slowly move the legs to position
+        
+        //hip servo of the leg
+        // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
+        if(l->curHip < targetAngles[i][0]){
+          l->curHip++;
+        }else if(l->curHip > targetAngles[i][0]){
+          l->curHip--;
+        }
+
+        // Lift servo of the leg
+        // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
+        if(l->curLift < targetAngles[i][1]){
+          l->curLift++;
+        }else if(l->curLift > targetAngles[i][1]){
+          l->curLift--;         
+        }
+  
+        // knee servo of the leg
+        // decide which way we are moving the servo to reach the target angle. Either Decrementing or Incrementing the current position
+        if(l->curKnee < targetAngles[i][2]){
+          l->curKnee++;
+        }else if(l->curKnee > targetAngles[i][2]){
+          l->curKnee--;        
+        }
+      }else{ // fast mode is set so instantly set the angle to the target so legs move instantly into position
+        l->curHip = targetAngles[i][0];
+        l->curLift = targetAngles[i][1];
+        l->curKnee = targetAngles[i][2];
+      }
+      //move the servos to the next position
+      moveLeg(l, l->curHip, l->curLift, l->curKnee);
+
+      //check if a leg has reached the target
+      if (l->curHip == targetAngles[i][0] && l->curLift == targetAngles[i][1] && l->curKnee == targetAngles[i][2]){
+        tally++; // increase the tally as a leg has reached its target
+      }
+  }
+
+  //if the tally == 6 then all the legs have been moved to the target so we have finished moving and return false (not moving)
+  if(tally == 6){
+    //Serial.print("Tally: ");
+    //Serial.println(tally);
+    return true;
+  }else{
+    return false;
+  }
+  
+  //Serial.println("Done updating Servos");
+}
 //Returns the angle that the leg's servos have to be set to reach that point in the retData param
 void moveLegIK(int *retData, leg *leg, float x, float y, float z, float rotY) {
 
@@ -663,4 +662,8 @@ void moveLeg(leg *leg, int rotateAngle, int liftAngle, int kneeAngle) {
   leg.kneeAngle = knee.read();
   delay(SERVO_WRITE_DELAY);
   */
+}
+
+void headLift(){
+  headRotate.write()
 }

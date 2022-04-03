@@ -94,7 +94,7 @@ def start():
     server.listen()
     print("Server:> Listening on: {0}:{1}) ".format(SERVER, PORT))
     # open the COM port to
-    controller.open()
+    # controller.open()
     if controller.is_open:
         print("Server:>  Controller COM Port open!")
     while True:

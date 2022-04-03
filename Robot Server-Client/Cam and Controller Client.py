@@ -1,3 +1,4 @@
+import datetime
 import pickle
 import socket
 import struct
@@ -8,17 +9,17 @@ from inputs import get_gamepad
 
 HEADER = 128  # Message length from communication
 PORT = 5050  # set the port to connect on
-PORT_CAM = 4000
+PORT_CAM = 9999
 
 FORMAT = 'utf-8'  # message format used for sending and receiving data via the socket connection
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # Sever address on the network
 # SERVER = 'HEXAPOD'
-# SERVER = "192.168.1.202"  # 'HEXAPOD'
-SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
+SERVER = '192.168.1.202'  # 'HEXAPOD'
+# SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
 
 ADDRESS = (SERVER, PORT)
-ADDRESS_CAM = (SERVER, PORT_CAM)
+ADDRESS_CAM = ('192.168.1.90', PORT_CAM)  # TODO: !!!!! <----  get the IP address of the client system and use it here
 print(ADDRESS_CAM)
 
 # setup the socket
@@ -68,6 +69,7 @@ def cam_start():
     global connected, msg_size
     print("Camera receive stream started")
     while connected:
+        start_time = datetime.datetime.now()
         # get the message size
         while len(vid_data) < msg_size:
             vid_data += conn.recv(4096)
@@ -76,11 +78,17 @@ def cam_start():
         unpacked_msg_size = struct.unpack("L", packed_msg_size)[0]
         # retrieve the video data
         while len(vid_data) < unpacked_msg_size:
-            vid_data += conn.recv(4096)
+            vid_data += conn.recv(8196)
         frame_data = vid_data[:unpacked_msg_size]
         vid_data = vid_data[unpacked_msg_size:]
         # extract the video frame
         frame = pickle.loads(frame_data)
+
+        # calc fps
+        end_time = datetime.datetime.now()
+        fps = 1 / ((end_time - start_time).total_seconds() + 0.00000000000000000001)  # prevent div by zero error
+        print("Fps: ", round(fps, 2))
+
         # show the data
         cv2.imshow("frame", frame)
         cv2.waitKey(1)
