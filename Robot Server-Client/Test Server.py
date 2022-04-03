@@ -13,7 +13,7 @@ PORT = 5050
 PORT_CAM = 4000
 # get the host IP address
 ADDRESS = (SERVER, PORT)
-ADDRESS_CAM = (SERVER, PORT_CAM)
+ADDRESS_CAM = ('192.168.56.1', 4000)  # default temp address
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # create the server
@@ -59,7 +59,7 @@ def handleClient(client, addr):
             if msg == DISCONNECT_MESSAGE:
                 connected = False
             # send the received message to the COM port
-            # COMSend(msg=msg.encode(FORMAT))
+            COMSend(msg=msg.encode(FORMAT))
             # send a message to the client
             client.send(b"COM snt")
             # print client message to the server console
@@ -75,6 +75,7 @@ def handle_camera():
     print("Cam Server:> Cam server started")
     print("Cam_Server:> THREAD STARTED")
     print("Cam Server:> Connected Stated: {0}".format(connected))
+    print("Cam Server:> Address: {0}".format(ADDRESS_CAM))
 
     server_Cam.connect(ADDRESS_CAM)
     video_cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -88,20 +89,20 @@ def handle_camera():
 
 
 def start():
+    global ADDRESS_CAM
     # put the server's socket into listening mode
     server.listen()
     print("Server:> Listening on: {0}:{1}) ".format(SERVER, PORT))
-
     # open the COM port to
-    # controller.open()
+    controller.open()
     if controller.is_open:
         print("Server:>  Controller COM Port open!")
-
     while True:
-
         client, addr = server.accept()
         if client:
             print("Server:> Connection from {0}".format(addr))
+            # assign the location that we need to connect to and send the camera data to
+            ADDRESS_CAM = (addr[0], PORT_CAM)
             thread = threading.Thread(target=handleClient, args=(client, addr))
             thread.start()
         # print the number of active connections (Based on the number of client connections that are being processed)

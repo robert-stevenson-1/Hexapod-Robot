@@ -13,11 +13,13 @@ PORT_CAM = 4000
 FORMAT = 'utf-8'  # message format used for sending and receiving data via the socket connection
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # Sever address on the network
+# SERVER = 'HEXAPOD'
 # SERVER = "192.168.1.202"  # 'HEXAPOD'
 SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
 
 ADDRESS = (SERVER, PORT)
 ADDRESS_CAM = (SERVER, PORT_CAM)
+print(ADDRESS_CAM)
 
 # setup the socket
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,9 +38,17 @@ commands = {
     "ABS_HAT0Y1": "<9 0 0 -40 0 0 0>",  # Move Backwards
     "ABS_HAT0X1": "<9 40 0 0 0 0 0>",  # Move Right
     "ABS_HAT0X-1": "<9 -40 0 0 0 0 0>",  # Move Left
-    "ABS_RZ255": "<9 0 0 0 0 -15 0>",  # Rotate on the spot
-    "ABS_Z255": "<9 0 0 0 0 15 0>",  # Rotate on the spot
-    "BTN_SELECT1": -1
+    "ABS_RZ255": "<9 0 0 0 -15 0 0>",  # Rotate on the spot
+    "ABS_Z255": "<9 0 0 0 15 0 0>",  # Rotate on the spot
+    "BTN_NORTH1": "<9 0 0 0 0 1 0>",  # head up
+    # "BTN_NORTH0": "0 0",  #
+    "BTN_SOUTH1": "<9 0 0 0 0 -1 0>",  # head right
+    # "BTN_SOUTH0": "0 0",  #
+    "BTN_WEST1": "<9 0 0 0 0 0 1>",  # head left
+    # "BTN_WEST0": "0 0",  #
+    "BTN_EAST1": "<9 0 0 0 0 0 -1>",  # head right
+    # "BTN_EAST0": "0 0",  #
+    "BTN_SELECT1": DISCONNECT_MESSAGE
 }
 
 
@@ -99,34 +109,33 @@ def start():
         global connected  # access the global var value
         cam_thread = threading.Thread(target=cam_start)
         cam_thread.start()
-
+        cmd = ''  # initialise the command
         # loop while connected
         while connected:
-            cmd = ""
             # get the controller events
             events = get_gamepad()
             for event in events:
-                # if event.code == 'ABS_HAT0X':
-                #     print(f'D-Pad x: {event.state}')
-                # elif event.code == 'ABS_HAT0Y':
-                #     print(f'D-Pad y: {event.state}')
-                # elif event.code != 'SYN_REPORT':
-                #     print('{0}, {1}'.format(event.code, event.state))
-                cmd = str(event.code) + str(event.state)
-            print("Command: " + cmd)
-            # check if a valid command was entered
-            if cmd in commands:
-                # get the full command from the commands dictionary
-                to_send = commands[cmd]
-                # check if the command entered was the 'exit' cmd
-                if to_send == -1:
-                    client_exit()
-                    # exit the loop early
-                    return
-                send(to_send)
-                print('Sent: ' + to_send)
-            else:
-                print("WARNING: Command not found")
+                # ignore system report events
+                if event.code != 'SYN_REPORT':
+                    print("Event: {0} val: {1}".format(str(event.code), str(event.state)))
+                    # check if we are at default/event reset
+                    if event.state != 0:
+                        cmd_key = str(event.code) + str(event.state)
+                        # get the full command from the commands dictionary
+                        if cmd_key in commands:
+                            cmd = commands[cmd_key]
+                            print("Command: " + str(cmd))
+                            # check if the command entered was the 'exit' cmd
+                            if cmd == DISCONNECT_MESSAGE:
+                                client_exit()
+                                # exit the loop early
+                                return
+                            send(cmd)
+                            print('Sent: ' + cmd)
+                    else:
+                        print('Sent reset!!')
+                        # send a reset to the robot (acts as a stop command)
+                        send("<8 0 0 0 0 0 0 5>")
     except socket.error as e:  # try triggered when connection timed out
         print("ERROR: Failed to Connect to Server...")
         print('-----> Exception: ' + str(e))
