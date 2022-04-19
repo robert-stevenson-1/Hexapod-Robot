@@ -4,16 +4,17 @@ import struct
 import threading
 import cv2
 import serial
+import base64
 
 HEADER = 128  # Message length from the client to the server
 
-SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())
 # set the port of the server
 PORT = 5050
-PORT_CAM = 4000
+PORT_CAM = 9999
 # get the host IP address
 ADDRESS = (SERVER, PORT)
-ADDRESS_CAM = (SERVER, PORT_CAM)
+ADDRESS_CAM = ('192.168.1.90', PORT_CAM)  #temp default address
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # create the server
@@ -23,7 +24,7 @@ server.bind(ADDRESS)
 
 # Serial Communication
 controller = serial.Serial()
-controller.port = 'COM3'
+controller.port = '/dev/ttyACM0'
 controller.baudrate = 115200
 
 connected = True
@@ -59,7 +60,7 @@ def handleClient(client, addr):
             if msg == DISCONNECT_MESSAGE:
                 connected = False
             # send the received message to the COM port
-            #COMSend(msg=msg.encode(FORMAT))
+            COMSend(msg=msg.encode(FORMAT))
             # send a message to the client
             client.send(b"Message sent to COM port")
             # print client message to the server console
@@ -75,25 +76,39 @@ def handle_camera():
     print("Cam Server:> Cam server started")
     print("Cam_Server:> THREAD STARTED")
     print("Cam Server:> Connected Stated: {0}".format(connected))
+    print("Cam Server:> Address: {0}".format(ADDRESS_CAM))
 
     server_Cam.connect(ADDRESS_CAM)
-    video_cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    print("Cam Server:> Cam Server Connected Successfully")
+    video_cap = cv2.VideoCapture(0)
+    video_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640) #640
+    video_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) #480 
     while connected:
         img, frame = video_cap.read()
-        video_data = pickle.dumps(frame)
+        # putting the FPS count on the frame
+        # video_data = pickle.dumps(frame)
+        
+        encoded_frame, f_buffer = cv2.imencode('.jpg', frame)
+        video_data = base64.b64encode(f_buffer)
+        
         msg_size = struct.pack("L", len(video_data))
-        server_Cam.sendall(msg_size + video_data)
+        try:
+            server_Cam.sendall(msg_size + video_data)
+        except socket.error:
+            print("Cam_Server:> SOCKET ERROR")
+            connected = False
     print("Cam_Server:> THREAD CLOSED")
     server_Cam.close()
 
 
 def start():
+    global ADDRESS_CAM
     # put the server's socket into listening mode
     server.listen()
     print("Server:> Listening on: {0}:{1}) ".format(SERVER, PORT))
 
     # open the COM port to
-    #controller.open()
+    controller.open()
     if controller.is_open:
         print("Server:>  Controller COM Port open!")
 
@@ -101,6 +116,8 @@ def start():
         client, addr = server.accept()
         if client:
             print("Server:> Connection from {0}".format(addr))
+            # assign the location that we need to connect to and send the camera data to
+            ADDRESS_CAM = (addr[0], PORT_CAM)
             thread = threading.Thread(target=handleClient, args=(client, addr))
             thread.start()
         # print the number of active connections (Based on the number of client connections that are being processed)

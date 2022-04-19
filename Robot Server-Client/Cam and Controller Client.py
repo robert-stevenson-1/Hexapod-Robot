@@ -1,10 +1,12 @@
-import datetime
+import base64
 import pickle
 import socket
 import struct
 import threading
-
+import netifaces
 import cv2
+import cvzone
+import numpy as np
 from inputs import get_gamepad
 
 HEADER = 128  # Message length from communication
@@ -18,8 +20,13 @@ DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 SERVER = '192.168.1.202'  # 'HEXAPOD'
 # SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
 
+# get the client network interface
+net_interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
+# get the ip of the client device
+client_ip = netifaces.ifaddresses(net_interface)[netifaces.AF_INET][0]['addr']
+
 ADDRESS = (SERVER, PORT)
-ADDRESS_CAM = ('192.168.1.90', PORT_CAM)  # TODO: !!!!! <----  get the IP address of the client system and use it here
+ADDRESS_CAM = (client_ip, PORT_CAM)
 print(ADDRESS_CAM)
 
 # setup the socket
@@ -42,13 +49,9 @@ commands = {
     "ABS_RZ255": "<9 0 0 0 -15 0 0>",  # Rotate on the spot
     "ABS_Z255": "<9 0 0 0 15 0 0>",  # Rotate on the spot
     "BTN_NORTH1": "<9 0 0 0 0 1 0>",  # head up
-    # "BTN_NORTH0": "0 0",  #
     "BTN_SOUTH1": "<9 0 0 0 0 -1 0>",  # head right
-    # "BTN_SOUTH0": "0 0",  #
     "BTN_WEST1": "<9 0 0 0 0 0 1>",  # head left
-    # "BTN_WEST0": "0 0",  #
     "BTN_EAST1": "<9 0 0 0 0 0 -1>",  # head right
-    # "BTN_EAST0": "0 0",  #
     "BTN_SELECT1": DISCONNECT_MESSAGE
 }
 
@@ -63,13 +66,15 @@ def client_exit():
 
 
 def cam_start():
+    fpsReader = cvzone.FPS()
     vid_data = b''
     cam_client.listen()
     conn, addr = cam_client.accept()
     global connected, msg_size
     print("Camera receive stream started")
     while connected:
-        start_time = datetime.datetime.now()
+        # start_time = datetime.datetime.now()
+
         # get the message size
         while len(vid_data) < msg_size:
             vid_data += conn.recv(4096)
@@ -82,12 +87,19 @@ def cam_start():
         frame_data = vid_data[:unpacked_msg_size]
         vid_data = vid_data[unpacked_msg_size:]
         # extract the video frame
-        frame = pickle.loads(frame_data)
 
-        # calc fps
-        end_time = datetime.datetime.now()
-        fps = 1 / ((end_time - start_time).total_seconds() + 0.00000000000000000001)  # prevent div by zero error
-        print("Fps: ", round(fps, 2))
+        #frame = pickle.loads(frame_data)
+
+        img = base64.b64decode(frame_data)
+        npimg = np.fromstring(img, dtype=np.uint8)
+        frame = cv2.imdecode(npimg, 1)
+
+        fps, frame = fpsReader.update(img=frame, pos=(40, 80), color=(0, 255, 0), scale=3, thickness=3)
+
+        # # calc fps
+        # end_time = datetime.datetime.now()
+        # fps = 1 / ((end_time - start_time).total_seconds() + 0.00000000000000000001)  # prevent div by zero error
+        # print("Fps: ", round(fps, 2))
 
         # show the data
         cv2.imshow("frame", frame)
