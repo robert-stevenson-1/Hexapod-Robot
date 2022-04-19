@@ -8,6 +8,9 @@ import cv2
 import cvzone
 import numpy as np
 from inputs import get_gamepad
+from cvzone.HandTrackingModule import HandDetector
+from cvzone.FaceDetectionModule import FaceDetector
+from cvzone.FaceMeshModule import FaceMeshDetector
 
 HEADER = 128  # Message length from communication
 PORT = 5050  # set the port to connect on
@@ -67,6 +70,10 @@ def client_exit():
 
 def cam_start():
     fpsReader = cvzone.FPS()
+    handDetector = HandDetector(detectionCon=0.9, maxHands=2)
+    faceDetector = FaceDetector()
+    faceMeshDetector = FaceMeshDetector(maxFaces=1)
+
     vid_data = b''
     cam_client.listen()
     conn, addr = cam_client.accept()
@@ -94,6 +101,20 @@ def cam_start():
         npimg = np.fromstring(img, dtype=np.uint8)
         frame = cv2.imdecode(npimg, 1)
 
+        #hand detection
+        hands, frame = handDetector.findHands(frame)
+        hands_thread = threading.Thread(target=processHands, args=(hands, handDetector,))
+        hands_thread.start()
+
+        #processHands(hands=hands, detector=handDetector)
+
+        # face detection
+        #frame, faces = faceDetector.findFaces(frame)
+
+        # face mesh detection
+        #frame, faces = faceMeshDetector.findFaceMesh(frame)
+
+        # add fps counter to frame
         fps, frame = fpsReader.update(img=frame, pos=(40, 80), color=(0, 255, 0), scale=3, thickness=3)
 
         # # calc fps
@@ -105,6 +126,21 @@ def cam_start():
         cv2.imshow("frame", frame)
         cv2.waitKey(1)
 
+def processFace(faces, detector):
+    pass
+
+def processHands(hands, detector):
+    if hands:
+        # Hand 1
+        hand1 = hands[0]
+        lmList1 = hand1["lmList"]  # List of 21 Landmark points
+        bbox1 = hand1["bbox"]  # Bounding box info x,y,w,h
+        centerPoint1 = hand1['center']  # center of the hand cx,cy
+        handType1 = hand1["type"]  # Handtype Left or Right
+
+        fingers1 = detector.fingersUp(hand1)
+
+        print("Hands fingers: " + str(fingers1))
 
 def send(msg):
     # global can_send
