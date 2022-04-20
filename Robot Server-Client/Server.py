@@ -81,19 +81,23 @@ def handle_camera():
     server_Cam.connect(ADDRESS_CAM)
     print("Cam Server:> Cam Server Connected Successfully")
     video_cap = cv2.VideoCapture(0)
-    video_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640) #640
-    video_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) #480 
+    video_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480) #640
+    video_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 320) #480 
     while connected:
         img, frame = video_cap.read()
         # putting the FPS count on the frame
-        # video_data = pickle.dumps(frame)
+        #video_data = pickle.dumps(frame)
         
-        encoded_frame, f_buffer = cv2.imencode('.jpg', frame)
+        f_buffer = cv2.imencode('.jpg', frame)[1]
         video_data = base64.b64encode(f_buffer)
         
-        msg_size = struct.pack("L", len(video_data))
+        f_buffer = f_buffer.tobytes()
+        #msg_size = struct.pack("L", len(video_data))
+        msg_size = struct.pack("L", len(f_buffer))
         try:
-            server_Cam.sendall(msg_size + video_data)
+            #server_Cam.sendall(msg_size + video_data)
+            server_Cam.sendall(msg_size + f_buffer)
+            print('msg_size len: ' + str(len(msg_size)) + ' | video_data len: ' + str(len(video_data)) + ' | encoded_frame len: ' + str(len(f_buffer)))
         except socket.error:
             print("Cam_Server:> SOCKET ERROR")
             connected = False

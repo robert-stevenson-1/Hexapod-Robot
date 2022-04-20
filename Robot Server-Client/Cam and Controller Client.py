@@ -43,6 +43,9 @@ can_send = True
 
 msg_size = struct.calcsize("L")
 
+# Frame buffer detecting hands in frame
+hand_frames = []
+
 # short handle commands dictionary
 commands = {
     "ABS_HAT0Y-1": "<9 0 0 40 0 0 0>",  # Move Forwards
@@ -70,15 +73,18 @@ def client_exit():
 
 def cam_start():
     fpsReader = cvzone.FPS()
-    handDetector = HandDetector(detectionCon=0.9, maxHands=2)
-    faceDetector = FaceDetector()
-    faceMeshDetector = FaceMeshDetector(maxFaces=1)
-
+    # faceDetector = FaceDetector()
+    # faceMeshDetector = FaceMeshDetector(maxFaces=1)
+    avr_fps = []
     vid_data = b''
     cam_client.listen()
     conn, addr = cam_client.accept()
     global connected, msg_size
     print("Camera receive stream started")
+
+    hands_thread = threading.Thread(target=processHands)
+    hands_thread.start()
+
     while connected:
         # start_time = datetime.datetime.now()
 
@@ -90,21 +96,21 @@ def cam_start():
         unpacked_msg_size = struct.unpack("L", packed_msg_size)[0]
         # retrieve the video data
         while len(vid_data) < unpacked_msg_size:
-            vid_data += conn.recv(8196)
+            vid_data += conn.recv(2**12)
         frame_data = vid_data[:unpacked_msg_size]
         vid_data = vid_data[unpacked_msg_size:]
         # extract the video frame
 
         #frame = pickle.loads(frame_data)
 
-        img = base64.b64decode(frame_data)
-        npimg = np.fromstring(img, dtype=np.uint8)
-        frame = cv2.imdecode(npimg, 1)
+        #img = base64.b64decode(frame_data)
+        #npimg = np.frombuffer(img, dtype=np.uint8)
+        frame_data = np.frombuffer(frame_data, np.uint8)
+        frame = cv2.imdecode(frame_data, cv2.IMREAD_COLOR)
 
         #hand detection
-        hands, frame = handDetector.findHands(frame)
-        hands_thread = threading.Thread(target=processHands, args=(hands, handDetector,))
-        hands_thread.start()
+        #hands, frame = handDetector.findHands(frame)
+        hand_frames.append(frame)
 
         #processHands(hands=hands, detector=handDetector)
 
@@ -115,32 +121,35 @@ def cam_start():
         #frame, faces = faceMeshDetector.findFaceMesh(frame)
 
         # add fps counter to frame
-        fps, frame = fpsReader.update(img=frame, pos=(40, 80), color=(0, 255, 0), scale=3, thickness=3)
-
-        # # calc fps
-        # end_time = datetime.datetime.now()
-        # fps = 1 / ((end_time - start_time).total_seconds() + 0.00000000000000000001)  # prevent div by zero error
-        # print("Fps: ", round(fps, 2))
+        #fps, frame = fpsReader.update(img=frame, pos=(40, 80), color=(0, 255, 0), scale=2, thickness=1)
+        fps = fpsReader.update()
+        avr_fps.append(fps)
 
         # show the data
         cv2.imshow("frame", frame)
         cv2.waitKey(1)
+    print("Avr FPS: " + str(sum(avr_fps)/len(avr_fps)))
 
 def processFace(faces, detector):
     pass
 
-def processHands(hands, detector):
-    if hands:
-        # Hand 1
-        hand1 = hands[0]
-        lmList1 = hand1["lmList"]  # List of 21 Landmark points
-        bbox1 = hand1["bbox"]  # Bounding box info x,y,w,h
-        centerPoint1 = hand1['center']  # center of the hand cx,cy
-        handType1 = hand1["type"]  # Handtype Left or Right
+def processHands():
+    handDetector = HandDetector(detectionCon=0.8, maxHands=2)
+    global hand_frames
+    while connected:
+        if len(hand_frames) > 0:
+            hands = handDetector.findHands(hand_frames, draw=False)
+            if hands:
+                # Hand 1
+                hand1 = hands[0]
+                lmList1 = hand1["lmList"]  # List of 21 Landmark points
+                bbox1 = hand1["bbox"]  # Bounding box info x,y,w,h
+                centerPoint1 = hand1['center']  # center of the hand cx,cy
+                handType1 = hand1["type"]  # Handtype Left or Right
 
-        fingers1 = detector.fingersUp(hand1)
+                fingers1 = handDetector.fingersUp(hand1)
 
-        print("Hands fingers: " + str(fingers1))
+                print("Hands fingers: " + str(fingers1))
 
 def send(msg):
     # global can_send
