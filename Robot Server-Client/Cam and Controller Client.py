@@ -20,8 +20,8 @@ FORMAT = 'utf-8'  # message format used for sending and receiving data via the s
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # Sever address on the network
 # SERVER = 'HEXAPOD'
-SERVER = '192.168.1.202'  # 'HEXAPOD'
-# SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
+# SERVER = '192.168.1.202'  # 'HEXAPOD'
+SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
 
 # get the client network interface
 net_interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
@@ -55,12 +55,16 @@ commands = {
     "ABS_RZ255": "<9 0 0 0 -15 0 0>",  # Rotate on the spot
     "ABS_Z255": "<9 0 0 0 15 0 0>",  # Rotate on the spot
     "BTN_NORTH1": "<9 0 0 0 0 1 0>",  # head up
-    "BTN_SOUTH1": "<9 0 0 0 0 -1 0>",  # head right
+    "BTN_SOUTH1": "<9 0 0 0 0 -1 0>",  # head down
     "BTN_WEST1": "<9 0 0 0 0 0 1>",  # head left
     "BTN_EAST1": "<9 0 0 0 0 0 -1>",  # head right
     "BTN_SELECT1": DISCONNECT_MESSAGE
 }
-
+# cmd generator control values
+trans_val = 40  # translation amount used to translation cmd
+rot_val = 15  # rotation amount used for rotation commands
+head_opt = 0  # 0 to 5 (inclusive) indicates what head values are send in the command regardless fo the rest of the cmd
+head_dir = 0
 
 def client_exit():
     global connected
@@ -183,28 +187,87 @@ def start():
                 # ignore system report events
                 if event.code != 'SYN_REPORT':
                     print("Event: {0} val: {1}".format(str(event.code), str(event.state)))
-                    # check if we are at default/event reset
-                    if event.state != 0:
-                        cmd_key = str(event.code) + str(event.state)
-                        # get the full command from the commands dictionary
-                        if cmd_key in commands:
-                            cmd = commands[cmd_key]
-                            print("Command: " + str(cmd))
-                            # check if the command entered was the 'exit' cmd
-                            if cmd == DISCONNECT_MESSAGE:
-                                client_exit()
-                                # exit the loop early
-                                return
-                            send(cmd)
-                            print('Sent: ' + cmd)
-                    else:
-                        print('Sent reset!!')
-                        # send a reset to the robot (acts as a stop command)
-                        send("<8 0 0 0 0 0 0 5>")
+                    cmd = generateCMD(event.code, event.state)
+                    cmd = cmd.format()
+                    print("Generated Cmd: " + cmd)
+                    # # check if we are at default/event reset
+                    # if event.state != 0:
+                    #     cmd_key = str(event.code) + str(event.state)
+                    #     # get the full command from the commands dictionary
+                    #     if cmd_key in commands:
+                    #         cmd = commands[cmd_key]
+
+                    print("Command:       " + str(cmd))
+                    # check if the command entered was the 'exit' cmd
+                    if cmd == DISCONNECT_MESSAGE:
+                        client_exit()
+                        # exit the loop early
+                        return
+                    send(cmd)
+                    print('Sent: ' + cmd)
+                    # else:
+                    #     # send a reset to the robot (acts as a stop command)
+                    #     send(str("<8 0 0 0 0 0 0 5>").format())
+                    #     print("===============\n")
     except socket.error as e:  # try triggered when connection timed out
         print("ERROR: Failed to Connect to Server...")
         print('-----> Exception: ' + str(e))
 
+# val: the value from event (key) used to decide direction in the returned cmd value
+def generateCMD(key, val):
+    cmd_body = "<9 0 0 0 0 {0}>"  # contains the main body of the command without the head information
+    # cmd_head = ""  # contain the head part of the cmd that is added to the cmd body last
+
+    global head_opt, head_dir
+
+    if key == 'ABS_HAT0Y':
+        cmd_body = "<9 0 0 {0} 0 {1}>".format(str(-1*trans_val*val), "{0}")
+    elif key == 'ABS_HAT0X':
+        cmd_body = "<9 {0} 0 0 0 {1}>".format(str(trans_val*val), "{0}")
+    elif key == 'ABS_Z':
+        cmd_body = "<9 0 0 0 {0} {1}>".format(str(rot_val), "{0}")
+    elif key == 'ABS_RZ':
+        cmd_body = "<9 0 0 0 {0} {1}>".format(str(-1*rot_val), "{0}")
+    elif key == 'BTN_NORTH':
+        head_dir = val
+        if head_dir:
+            head_opt = 1
+        else:
+            head_opt = 0
+    elif key == 'BTN_SOUTH':
+        head_dir = val
+        if head_dir:
+            head_opt = 2
+        else:
+            head_opt = 0
+    elif key == 'BTN_WEST':
+        head_dir = val
+        if head_dir:
+            head_opt = 3
+        else:
+            head_opt = 0
+    elif key == 'BTN_EAST':
+        head_dir = val
+        if head_dir:
+            head_opt = 4
+        else:
+            head_opt = 0
+    elif key == 'BTN_SELECT':
+        return DISCONNECT_MESSAGE
+
+    # get the head cmd part
+    if head_opt == 1:
+        cmd_head = "{0} 0".format(str(1*head_dir))
+    elif head_opt == 2:
+        cmd_head = "{0} 0".format(str(-1*head_dir))
+    elif head_opt == 3:
+        cmd_head = "0 {0}".format(str(1*head_dir))
+    elif head_opt == 4:
+        cmd_head = "0 {0}".format(str(-1*head_dir))
+    else:
+        cmd_head = "0 0"
+
+    return cmd_body.format(cmd_head)
 
 if __name__ == '__main__':
     controller_thread = threading.Thread(target=start)

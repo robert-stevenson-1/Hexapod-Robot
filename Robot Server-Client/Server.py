@@ -5,10 +5,12 @@ import threading
 import cv2
 import serial
 import base64
+from sys import platform
 
 HEADER = 128  # Message length from the client to the server
 
-SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())
+SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())  # FOR TESTING
+# SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())
 # set the port of the server
 PORT = 5050
 PORT_CAM = 9999
@@ -24,7 +26,15 @@ server.bind(ADDRESS)
 
 # Serial Communication
 controller = serial.Serial()
-controller.port = '/dev/ttyACM0'
+
+# find out the OS that the server is running on so we know how to assign the COM port path
+if platform == "linux" or platform == "linux2":
+    # linux
+    controller.port = '/dev/ttyACM0'  # linux
+elif platform == "win32":
+    # Windows...
+    controller.port = 'COM3'  # Windows
+
 controller.baudrate = 115200
 
 connected = True

@@ -12,7 +12,8 @@
 // =========CONST========
 // ======================
 
-#define WRITE_INTERVAL 100 //0.5 sec
+long WRITE_INTERVAL_1 = 100; //gait interval
+long WRITE_INTERVAL_2 = 100; //Head move interval
 #define MAX_STAGES 6 // Num of stages in the gait to complete a full cycle
 #define LIFT_OFFSET -50 //mm
 
@@ -29,7 +30,7 @@ enum comID{
   FL = 6,
   ML = 5,
   BL = 4,
-  R = 7
+  H = 7
 };
 
 // ======================
@@ -62,9 +63,18 @@ bool moving = false;
 bool moveDone = false;
 int stage = 0;
 
+//head control flags
+bool headUp = false;
+bool headDown = false;
+bool headLeft = false;
+bool headRight = false;
+
+//head move increment amount
+int headMoveVal = 1;
 
 //Timing var for managing program blocking when writng servos
-unsigned long previousMillis = 0;
+unsigned long previousMillis1 = 0; // legs movement
+unsigned long previousMillis2 = 0; // legs movement
 
 //test vars
 bool up = true;
@@ -113,6 +123,10 @@ void setup() {
   #endif
   // ==================================
 
+  // set head to default ready positions
+  headLift.write(90);
+  headRotate.write(90);
+  
   clearInputBuffer();
 }
 
@@ -128,36 +142,23 @@ void loop() {
   //after getting new data parse it as a command, only when the robot isn't in the middle of moving
   if(newData == true && moving == false){
     #ifdef DEBUG
-    Serial.println("==========================");
-    Serial.print("Data: ");
-    Serial.println(data);
+      Serial.println("==========================");
+      Serial.print("Data: ");
+      Serial.println(data);
     #endif
     //parse the data to a command and execute the command (Command will be related to moving the robot)
     getCommand();    
   }  
-  // We are curently in the middle of moving
-  if(currentMillis - previousMillis >= WRITE_INTERVAL){
-    // save the last time we wrote
-    previousMillis = currentMillis;
 
+  // check we can do this task this loop or if we do it another time later
+  if(currentMillis - previousMillis1 >= WRITE_INTERVAL_1){
+    // save the last time we wrote
+    previousMillis1 = currentMillis;
+
+    // We are curently in the middle of moving
     if(moving == true){   
       // move the leg closer to their target positions. Returns true then targets are met
       if(updateLegs()){
-        /*
-        Serial.print("x: ");
-        Serial.print(atoi(comData[1]));
-        Serial.print(" | y: ");
-        Serial.print(atoi(comData[2]));
-        Serial.print(" | z: ");
-        Serial.print(atoi(comData[3]));
-        Serial.print(" | Prev Stage: ");
-        Serial.print(stage);
-        Serial.print(" | Moving: ");
-        Serial.print(moving);
-        Serial.print(" | moveDone: ");
-        Serial.print(moveDone);     
-        */
-
         // reached the end of the walk cycle and reset to stage 0 putting all the feet in the ground
         if(stage >= MAX_STAGES){
           moveDone = true; // robot is done moving
@@ -167,25 +168,53 @@ void loop() {
         // get the next gait stage values
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), stage);
         #ifdef DEBUG
-        Serial.print(" | Cur Stage: ");
-        Serial.println(stage);
+          Serial.print(" | Cur Stage: ");
+          Serial.println(stage);
         #endif
         //flag the whole movement operation as over by setting the moving flag to false, and seting the moveDone flag too
         if(moveDone == true){
           moving = false;
           moveDone = false;
-          Serial.println("Mv Dn");
+          //Serial.println("Mv Dn");
         }        
         // increment the current stage in the walk cycle if all the legs have met their target positions
         stage++;
-        
-        //delay(2000);
-
-          
       }else{
         // legs aren't at the there target so the robot is still moving
         moving = true;
       }
+    }
+  }
+
+  // check we can do this task this loop or if we do it another time later
+  if(currentMillis - previousMillis2 >= WRITE_INTERVAL_2){
+    // save the last time we wrote
+    previousMillis2 = currentMillis;
+    #ifdef DEBUG
+      Serial.println("===========HEAD===========");
+      Serial.print("Up: ");
+      Serial.print(headUp);
+      Serial.print(" | Down: ");
+      Serial.print(headDown);
+      Serial.print(" | Left: ");
+      Serial.print(headLeft);
+      Serial.print(" | Right: ");
+      Serial.println(headRight);
+    #endif
+    // Lets move the head in the direct that was last told and is no directio is true then stop moving
+    if(headUp == true){
+      liftHead(headMoveVal);
+    }else if(headDown == true){
+      liftHead(-headMoveVal);
+    }else if(headLeft == true){
+      rotateHead(headMoveVal);
+    }else if(headRight == true){
+      rotateHead(-headMoveVal) ; 
+    }else{
+      headUp = false;
+      headDown = false;
+      headLeft = false;
+      headRight = false;
     }
   }
   
@@ -221,63 +250,90 @@ void getCommand(){
     //Execute the command that was collected
     switch(atoi(comData[0])){
       case FR: // 1
-      #ifdef DEBUG
-        Serial.println("FR");
-      #endif
+        #ifdef DEBUG
+          Serial.println("FR");
+        #endif
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), -1); 
         moveLeg(&fr, targetAngles[0][0], targetAngles[0][1], targetAngles[0][2]);
         break;
       case MR: // 2
-      #ifdef DEBUG
-        Serial.println("MR");
-      #endif
+        #ifdef DEBUG
+          Serial.println("MR");
+        #endif
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), -1); 
         moveLeg(&mr, targetAngles[1][0], targetAngles[1][1], targetAngles[1][2]);
         break;
       case BR: // 3
-      #ifdef DEBUG
-        Serial.println("BR");
-      #endif
+        #ifdef DEBUG
+          Serial.println("BR");
+        #endif
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), -1); 
         moveLeg(&br, targetAngles[2][0], targetAngles[2][1], targetAngles[2][2]);
         break;
       case FL: // 4
-      #ifdef DEBUG
-        Serial.println("FL");
-      #endif
+        #ifdef DEBUG
+          Serial.println("FL");
+        #endif
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), -1); 
         moveLeg(&fl, targetAngles[3][0], targetAngles[3][1], targetAngles[3][2]);
         break;
       case ML: // 5
-      #ifdef DEBUG
-        Serial.println("ML");
-      #endif
+        #ifdef DEBUG
+          Serial.println("ML");
+        #endif
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), -1); 
         moveLeg(&ml, targetAngles[4][0], targetAngles[4][1], targetAngles[4][2]);
         break;
       case BL: // 6 
-      #ifdef DEBUG
-        Serial.println("BL");
-      #endif
+        #ifdef DEBUG
+          Serial.println("BL");
+        #endif
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), -1); 
         moveLeg(&bl, targetAngles[5][0], targetAngles[5][1], targetAngles[5][2]);
         break;
-      case R: // 7 // Move the whole robot
-      #ifdef DEBUG
-        Serial.println("Move Head");
-      #endif
+      case H: // 7 // Move the whole robot
+        #ifdef DEBUG
+          Serial.println("Move Head");
+        #endif
         
-        moveLeg(&fr, targetAngles[0][0], targetAngles[0][1], targetAngles[0][2]);
-        moveLeg(&mr, targetAngles[1][0], targetAngles[1][1], targetAngles[1][2]);
-        moveLeg(&br, targetAngles[2][0], targetAngles[2][1], targetAngles[2][2]);
-        moveLeg(&fl, targetAngles[3][0], targetAngles[3][1], targetAngles[3][2]);
-        moveLeg(&ml, targetAngles[4][0], targetAngles[4][1], targetAngles[4][2]);
-        moveLeg(&bl, targetAngles[5][0], targetAngles[5][1], targetAngles[5][2]);
-        break;
-      case 8:
+        //head vertical control
+        if(atoi(comData[5]) == 1){
+          headUp = true;
+          headDown = false;
+        }else if (atoi(comData[5]) == -1){
+          headUp = false;
+          headDown = true;
+        }else if (atoi(comData[5]) == 0){
+          headUp = false;
+          headDown = false;
+        }
+        //head horizontal control
+        if(atoi(comData[6]) == 1){
+          headLeft = true;
+          headRight = false;
+        }else if (atoi(comData[6]) == -1){
+          headLeft = false;
+          headRight = true;
+        } else if (atoi(comData[6]) == 0){
+          headLeft = false;
+          headRight = false;
+        }
       #ifdef DEBUG
-        Serial.println("Stage Select");
+        Serial.println("+++++++++HEAD+++++++++");
+        Serial.print("Up: ");
+        Serial.print(headUp);
+        Serial.print(" | Down: ");
+        Serial.print(headDown);
+        Serial.print(" | Left: ");
+        Serial.print(headLeft);
+        Serial.print(" | Right: ");
+        Serial.println(headRight);
       #endif
+      
+      case 8:
+        #ifdef DEBUG
+          Serial.println("Stage Select");
+        #endif
         gait(atoi(comData[1]), atoi(comData[2]), atoi(comData[3]), atoi(comData[4]), atoi(comData[7]));
         moveLeg(&fr, targetAngles[0][0], targetAngles[0][1], targetAngles[0][2]);
         moveLeg(&mr, targetAngles[1][0], targetAngles[1][1], targetAngles[1][2]);
@@ -287,10 +343,39 @@ void getCommand(){
         moveLeg(&bl, targetAngles[5][0], targetAngles[5][1], targetAngles[5][2]);
         break;
       case 9:
-      #ifdef DEBUG
-        Serial.println("Gait Movement");
-      #endif
-        moving = true;
+        #ifdef DEBUG
+          Serial.println("Gait Movement");
+        #endif
+
+        //Check if there is transation or rotation data before saying the robot is now in a moving state (allowing it the move the legs)
+        if (!(atoi(comData[1]) == 0 && atoi(comData[2]) == 0 && atoi(comData[3]) == 0 && atoi(comData[4]) == 0)){       
+          moving = true;
+        }
+        
+        //head vertical control
+        if(atoi(comData[5]) == 1){
+          headUp = true;
+          headDown = false;
+        }else if (atoi(comData[5]) == -1){
+          headUp = false;
+          headDown = true;
+        }else if (atoi(comData[5]) == 0){
+          headUp = false;
+          headDown = false;
+        }
+        //head horizontal control
+        if(atoi(comData[6]) == 1){
+          headLeft = true;
+          headRight = false;
+        }else if (atoi(comData[6]) == -1){
+          headLeft = false;
+          headRight = true;
+        } else if (atoi(comData[6]) == 0){
+          headLeft = false;
+          headRight = false;
+        }
+
+        
         break;
       default:
         //Serial.println("Invalid Command ID");
@@ -379,6 +464,10 @@ void attachServos() {
   bl.hipOffsetAngle = 60;
   delay(20);
 
+  //head
+  headLift.attach(HEAD_LIFT_PIN);
+  headRotate.attach(HEAD_ROTATE_PIN);
+  
 }
 
 void gait(int x, int y, int z, int rotY, int stage){
@@ -664,6 +753,22 @@ void moveLeg(leg *leg, int rotateAngle, int liftAngle, int kneeAngle) {
   */
 }
 
-void headLift(){
-  headRotate.write()
+void liftHead(int angAmount){
+  int cur = headLift.read();
+  int newAng = cur + angAmount;
+  
+  if(newAng > 180) newAng = 180;
+  if(newAng < 0) newAng = 0;
+  
+  headLift.write(newAng);
+}
+
+void rotateHead(int angAmount){
+  int cur = headRotate.read();
+  int newAng = cur + angAmount;
+  
+  if(newAng > 180) newAng = 180;
+  if(newAng < 0) newAng = 0;
+  
+  headRotate.write(newAng);
 }
