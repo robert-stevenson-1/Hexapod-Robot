@@ -9,8 +9,8 @@ from sys import platform
 
 HEADER = 128  # Message length from the client to the server
 
-SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())  # FOR TESTING
-# SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())
+SERVER = socket.gethostbyname(socket.gethostname())  # FOR TESTING
+#SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())
 # set the port of the server
 PORT = 5050
 PORT_CAM = 9999
@@ -38,6 +38,9 @@ elif platform == "win32":
 controller.baudrate = 115200
 
 connected = True
+
+# next ready frame
+next_frame = None
 
 def COMSend(msg):
 
@@ -92,28 +95,68 @@ def handle_camera():
     print("Cam Server:> Cam Server Connected Successfully")
     video_cap = cv2.VideoCapture(0)
     video_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480) #640
-    video_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 320) #480 
+    video_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 320) #480
+
+    getFrameThread = threading.Thread(target=get_frame, args=(video_cap,))
+    sendFrameThread = threading.Thread(target=send_frame, args=(server_Cam,))
+
+    # getFrameThread.daemon = True
+    # sendFrameThread.daemon = True
+
+    getFrameThread.start()
+    sendFrameThread.start()
+
     while connected:
-        img, frame = video_cap.read()
-        # putting the FPS count on the frame
-        #video_data = pickle.dumps(frame)
-        
-        f_buffer = cv2.imencode('.jpg', frame)[1]
-        video_data = base64.b64encode(f_buffer)
-        
-        f_buffer = f_buffer.tobytes()
-        #msg_size = struct.pack("L", len(video_data))
-        msg_size = struct.pack("L", len(f_buffer))
-        try:
-            #server_Cam.sendall(msg_size + video_data)
-            server_Cam.sendall(msg_size + f_buffer)
-            print('msg_size len: ' + str(len(msg_size)) + ' | video_data len: ' + str(len(video_data)) + ' | encoded_frame len: ' + str(len(f_buffer)))
-        except socket.error:
-            print("Cam_Server:> SOCKET ERROR")
+        if not getFrameThread.is_alive() or not sendFrameThread.is_alive():
             connected = False
+
+    # while connected:
+    #     img, frame = video_cap.read()
+    #     # putting the FPS count on the frame
+    #     #video_data = pickle.dumps(frame)
+    #
+    #     f_buffer = cv2.imencode('.jpg', frame)[1]
+    #     video_data = base64.b64encode(f_buffer)
+    #
+    #     f_buffer = f_buffer.tobytes()
+    #     #msg_size = struct.pack("L", len(video_data))
+    #     msg_size = struct.pack("L", len(f_buffer))
+    #     try:
+    #         #server_Cam.sendall(msg_size + video_data)
+    #         server_Cam.sendall(msg_size + f_buffer)
+    #         print('msg_size len: ' + str(len(msg_size)) + ' | video_data len: ' + str(len(video_data)) + ' | encoded_frame len: ' + str(len(f_buffer)))
+    #     except socket.error:
+    #         print("Cam_Server:> SOCKET ERROR")
+    #         connected = False
+
     print("Cam_Server:> THREAD CLOSED")
     server_Cam.close()
 
+def get_frame(video_cap):
+    global connected, next_frame
+    while connected:
+        img, frame = video_cap.read()
+        next_frame = frame
+    print("GET FRAME THREAD:> THREAD CLOSED")
+
+
+def send_frame(server_Cam):
+    global connected, next_frame
+    while connected:
+        if next_frame is not None:
+            f_buffer = cv2.imencode('.jpg', next_frame)[1]
+            video_data = base64.b64encode(f_buffer)
+
+            f_buffer = f_buffer.tobytes()
+            msg_size = struct.pack("L", len(f_buffer))
+            try:
+                server_Cam.sendall(msg_size + f_buffer)
+                print('msg_size len: ' + str(len(msg_size)) + ' | video_data len: ' + str(
+                    len(video_data)) + ' | encoded_frame len: ' + str(len(f_buffer)))
+            except socket.error:
+                print("Cam_Server:> SOCKET ERROR")
+                connected = False
+    print("SEND FRAME THREAD:> THREAD CLOSED")
 
 def start():
     global ADDRESS_CAM

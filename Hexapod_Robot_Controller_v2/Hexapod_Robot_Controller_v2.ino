@@ -13,7 +13,7 @@
 // ======================
 
 long WRITE_INTERVAL_1 = 100; //gait interval
-long WRITE_INTERVAL_2 = 100; //Head move interval
+long WRITE_INTERVAL_2 = 10; //Head move interval
 #define MAX_STAGES 6 // Num of stages in the gait to complete a full cycle
 #define LIFT_OFFSET -50 //mm
 

@@ -1,4 +1,5 @@
 import base64
+import datetime
 import pickle
 import socket
 import struct
@@ -11,6 +12,7 @@ from inputs import get_gamepad
 from cvzone.HandTrackingModule import HandDetector
 from cvzone.FaceDetectionModule import FaceDetector
 from cvzone.FaceMeshModule import FaceMeshDetector
+import matplotlib.pyplot as plt
 
 HEADER = 128  # Message length from communication
 PORT = 5050  # set the port to connect on
@@ -19,14 +21,15 @@ PORT_CAM = 9999
 FORMAT = 'utf-8'  # message format used for sending and receiving data via the socket connection
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # Sever address on the network
-# SERVER = 'HEXAPOD'
-# SERVER = '192.168.1.202'  # 'HEXAPOD'
-SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
+SERVER = '192.168.1.202'  # 'HEXAPOD'
+#SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
 
 # get the client network interface
 net_interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
+
 # get the ip of the client device
 client_ip = netifaces.ifaddresses(net_interface)[netifaces.AF_INET][0]['addr']
+#client_ip = "192.168.56.1"  # FOR TESTING
 
 ADDRESS = (SERVER, PORT)
 ADDRESS_CAM = (client_ip, PORT_CAM)
@@ -45,6 +48,8 @@ msg_size = struct.calcsize("L")
 
 # Frame buffer detecting hands in frame
 hand_frames = []
+
+avr_fps = [[], []]
 
 # short handle commands dictionary
 commands = {
@@ -76,63 +81,76 @@ def client_exit():
 
 
 def cam_start():
-    fpsReader = cvzone.FPS()
-    # faceDetector = FaceDetector()
-    # faceMeshDetector = FaceMeshDetector(maxFaces=1)
-    avr_fps = []
-    vid_data = b''
-    cam_client.listen()
-    conn, addr = cam_client.accept()
-    global connected, msg_size
-    print("Camera receive stream started")
+    try:
+        fpsReader = cvzone.FPS()
+        # faceDetector = FaceDetector()
+        # faceMeshDetector = FaceMeshDetector(maxFaces=1)
+        handDetector = HandDetector(detectionCon=0.8, maxHands=2)
 
-    hands_thread = threading.Thread(target=processHands)
-    hands_thread.start()
+        vid_data = b''
+        cam_client.listen()
+        conn, addr = cam_client.accept()
+        global connected, msg_size, avr_fps
+        print("Camera receive stream started")
 
-    while connected:
-        # start_time = datetime.datetime.now()
+        hands_thread = threading.Thread(target=processHands)
+        hands_thread.start()
 
-        # get the message size
-        while len(vid_data) < msg_size:
-            vid_data += conn.recv(4096)
-        packed_msg_size = vid_data[:msg_size]
-        vid_data = vid_data[msg_size:]
-        unpacked_msg_size = struct.unpack("L", packed_msg_size)[0]
-        # retrieve the video data
-        while len(vid_data) < unpacked_msg_size:
-            vid_data += conn.recv(2**12)
-        frame_data = vid_data[:unpacked_msg_size]
-        vid_data = vid_data[unpacked_msg_size:]
-        # extract the video frame
+        while connected:
+            # get the message size
+            while len(vid_data) < msg_size:
+                vid_data += conn.recv(4096)
+            packed_msg_size = vid_data[:msg_size]
+            vid_data = vid_data[msg_size:]
+            unpacked_msg_size = struct.unpack("L", packed_msg_size)[0]
+            # retrieve the video data
+            while len(vid_data) < unpacked_msg_size:
+                vid_data += conn.recv(2**12)
+            frame_data = vid_data[:unpacked_msg_size]
+            vid_data = vid_data[unpacked_msg_size:]
+            # extract the video frame
+            frame_data = np.frombuffer(frame_data, np.uint8)
+            frame = cv2.imdecode(frame_data, cv2.IMREAD_COLOR)
 
-        #frame = pickle.loads(frame_data)
+            #hand detection
+            # hands, frame = handDetector.findHands(frame)
+            # hands = handDetector.findHands(frame, draw=False)
+            #
+            # if hands:
+            #     # Hand 1
+            #     hand1 = hands[0]
+            #     lmList1 = hand1["lmList"]  # List of 21 Landmark points
+            #     bbox1 = hand1["bbox"]  # Bounding box info x,y,w,h
+            #     centerPoint1 = hand1['center']  # center of the hand cx,cy
+            #     handType1 = hand1["type"]  # Handtype Left or Right
+            #
+            #     fingers1 = handDetector.fingersUp(hand1)
+            #
+            #     print("Hands fingers: " + str(fingers1))
 
-        #img = base64.b64decode(frame_data)
-        #npimg = np.frombuffer(img, dtype=np.uint8)
-        frame_data = np.frombuffer(frame_data, np.uint8)
-        frame = cv2.imdecode(frame_data, cv2.IMREAD_COLOR)
+            # face detection
+            #frame, faces = faceDetector.findFaces(frame)
 
-        #hand detection
-        #hands, frame = handDetector.findHands(frame)
-        hand_frames.append(frame)
+            # face mesh detection
+            #frame, faces = faceMeshDetector.findFaceMesh(frame)
 
-        #processHands(hands=hands, detector=handDetector)
+            hand_frames.append(frame)
 
-        # face detection
-        #frame, faces = faceDetector.findFaces(frame)
+            # add fps counter to frame
+            fps, frame = fpsReader.update(img=frame, pos=(40, 80), color=(0, 255, 0), scale=2, thickness=1)
+            #fps = fpsReader.update()
+            avr_fps[0].append(datetime.datetime.now())
+            avr_fps[1].append(fps)
 
-        # face mesh detection
-        #frame, faces = faceMeshDetector.findFaceMesh(frame)
+            # show the data
+            cv2.imshow("frame", frame)
+            cv2.waitKey(1)
+        print("Avr FPS: " + str(sum(avr_fps[1])/len(avr_fps[1])))
 
-        # add fps counter to frame
-        #fps, frame = fpsReader.update(img=frame, pos=(40, 80), color=(0, 255, 0), scale=2, thickness=1)
-        fps = fpsReader.update()
-        avr_fps.append(fps)
-
-        # show the data
-        cv2.imshow("frame", frame)
-        cv2.waitKey(1)
-    print("Avr FPS: " + str(sum(avr_fps)/len(avr_fps)))
+    except socket.error as e:  # try triggered when connection timed out
+        print("ERROR: (C) Connection to Server lost...")
+        print('-----> Exception: ' + str(e))
+        connected = False
 
 def processFace(faces, detector):
     pass
@@ -142,7 +160,9 @@ def processHands():
     global hand_frames
     while connected:
         if len(hand_frames) > 0:
-            hands = handDetector.findHands(hand_frames, draw=False)
+
+            print("FRAMES TO PROCESS: " + str(len(hand_frames)))
+            hands = handDetector.findHands(hand_frames.pop(), draw=False)
             if hands:
                 # Hand 1
                 hand1 = hands[0]
@@ -177,6 +197,7 @@ def start():
         client.connect(ADDRESS)  # Connect to the server
         global connected  # access the global var value
         cam_thread = threading.Thread(target=cam_start)
+        cam_thread.daemon = True
         cam_thread.start()
         cmd = ''  # initialise the command
         # loop while connected
@@ -190,14 +211,6 @@ def start():
                     cmd = generateCMD(event.code, event.state)
                     cmd = cmd.format()
                     print("Generated Cmd: " + cmd)
-                    # # check if we are at default/event reset
-                    # if event.state != 0:
-                    #     cmd_key = str(event.code) + str(event.state)
-                    #     # get the full command from the commands dictionary
-                    #     if cmd_key in commands:
-                    #         cmd = commands[cmd_key]
-
-                    print("Command:       " + str(cmd))
                     # check if the command entered was the 'exit' cmd
                     if cmd == DISCONNECT_MESSAGE:
                         client_exit()
@@ -205,13 +218,13 @@ def start():
                         return
                     send(cmd)
                     print('Sent: ' + cmd)
-                    # else:
-                    #     # send a reset to the robot (acts as a stop command)
-                    #     send(str("<8 0 0 0 0 0 0 5>").format())
-                    #     print("===============\n")
+
+
+
     except socket.error as e:  # try triggered when connection timed out
-        print("ERROR: Failed to Connect to Server...")
+        print("ERROR: (S) Connection to Server lost...")
         print('-----> Exception: ' + str(e))
+        connected = False
 
 # val: the value from event (key) used to decide direction in the returned cmd value
 def generateCMD(key, val):
@@ -272,3 +285,14 @@ def generateCMD(key, val):
 if __name__ == '__main__':
     controller_thread = threading.Thread(target=start)
     controller_thread.start()
+
+    controller_thread.join()
+
+    # plot fps over time
+    plt.plot(avr_fps[0], avr_fps[1])
+    plt.xlabel('Time (s)')
+    plt.ylabel('FPS')
+    plt.grid = True
+    title = "Frame rate over the period of the run. Avr FPS: {0}".format(str(sum(avr_fps[1]) / len(avr_fps[1])))
+    plt.gca().set_title(title, fontsize=8)
+    plt.show()
