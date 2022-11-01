@@ -72,3 +72,8 @@ crashlytics-build.properties
 
 # Ignore IDEA files
 /PythonNetworkTest/.idea
+/Robot Server-Client/.idea
+
+
+/PythonNetworkTest/venv/
+/Robot Server-Client/venv/

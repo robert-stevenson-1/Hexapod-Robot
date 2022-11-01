@@ -1,11 +1,13 @@
-import pickle
 import socket
 import struct
 import threading
 import cv2
+import cvzone
 import serial
-import base64
 from sys import platform
+
+from cvzone.FaceDetectionModule import FaceDetector
+from cvzone.HandTrackingModule import HandDetector
 
 HEADER = 128  # Message length from the client to the server
 
@@ -41,6 +43,10 @@ connected = True
 
 # next ready frame
 next_frame = None
+
+#help hand gesture
+helpGesture = [0, 1, 1, 1, 0]
+
 
 def COMSend(msg):
 
@@ -100,9 +106,6 @@ def handle_camera():
     getFrameThread = threading.Thread(target=get_frame, args=(video_cap,))
     sendFrameThread = threading.Thread(target=send_frame, args=(server_Cam,))
 
-    # getFrameThread.daemon = True
-    # sendFrameThread.daemon = True
-
     getFrameThread.start()
     sendFrameThread.start()
 
@@ -110,24 +113,6 @@ def handle_camera():
         if not getFrameThread.is_alive() or not sendFrameThread.is_alive():
             connected = False
 
-    # while connected:
-    #     img, frame = video_cap.read()
-    #     # putting the FPS count on the frame
-    #     #video_data = pickle.dumps(frame)
-    #
-    #     f_buffer = cv2.imencode('.jpg', frame)[1]
-    #     video_data = base64.b64encode(f_buffer)
-    #
-    #     f_buffer = f_buffer.tobytes()
-    #     #msg_size = struct.pack("L", len(video_data))
-    #     msg_size = struct.pack("L", len(f_buffer))
-    #     try:
-    #         #server_Cam.sendall(msg_size + video_data)
-    #         server_Cam.sendall(msg_size + f_buffer)
-    #         print('msg_size len: ' + str(len(msg_size)) + ' | video_data len: ' + str(len(video_data)) + ' | encoded_frame len: ' + str(len(f_buffer)))
-    #     except socket.error:
-    #         print("Cam_Server:> SOCKET ERROR")
-    #         connected = False
 
     print("Cam_Server:> THREAD CLOSED")
     server_Cam.close()
@@ -139,20 +124,17 @@ def get_frame(video_cap):
         next_frame = frame
     print("GET FRAME THREAD:> THREAD CLOSED")
 
-
 def send_frame(server_Cam):
-    global connected, next_frame
+    global connected, processed_frame
     while connected:
-        if next_frame is not None:
-            f_buffer = cv2.imencode('.jpg', next_frame)[1]
-            video_data = base64.b64encode(f_buffer)
+        if processed_frame is not None:
+            f_buffer = cv2.imencode('.jpg', processed_frame)[1]
 
             f_buffer = f_buffer.tobytes()
             msg_size = struct.pack("L", len(f_buffer))
             try:
                 server_Cam.sendall(msg_size + f_buffer)
-                print('msg_size len: ' + str(len(msg_size)) + ' | video_data len: ' + str(
-                    len(video_data)) + ' | encoded_frame len: ' + str(len(f_buffer)))
+
             except socket.error:
                 print("Cam_Server:> SOCKET ERROR")
                 connected = False
