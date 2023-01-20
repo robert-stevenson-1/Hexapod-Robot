@@ -1,6 +1,5 @@
-import base64
 import datetime
-import pickle
+import csv
 import socket
 import struct
 import threading
@@ -21,15 +20,15 @@ PORT_CAM = 9999
 FORMAT = 'utf-8'  # message format used for sending and receiving data via the socket connection
 DISCONNECT_MESSAGE = "CLIENT_DISCONNECT"
 # Sever address on the network
-SERVER = '192.168.1.202'  # 'HEXAPOD'
 #SERVER = "192.168.56.1"  # 'DESKTOP TEST SERVER'
+SERVER = '192.168.1.202'  # 'HEXAPOD'
 
 # get the client network interface
 net_interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
 
 # get the ip of the client device
-client_ip = netifaces.ifaddresses(net_interface)[netifaces.AF_INET][0]['addr']
 #client_ip = "192.168.56.1"  # FOR TESTING
+client_ip = netifaces.ifaddresses(net_interface)[netifaces.AF_INET][0]['addr']
 
 ADDRESS = (SERVER, PORT)
 ADDRESS_CAM = (client_ip, PORT_CAM)
@@ -50,6 +49,9 @@ msg_size = struct.calcsize("L")
 hand_frames = []
 
 avr_fps = [[], []]
+
+helpGesture = [0, 1, 1, 1, 0]
+helpHand = False
 
 # short handle commands dictionary
 commands = {
@@ -83,14 +85,14 @@ def client_exit():
 def cam_start():
     try:
         fpsReader = cvzone.FPS()
-        # faceDetector = FaceDetector()
+        faceDetector = FaceDetector()
         # faceMeshDetector = FaceMeshDetector(maxFaces=1)
-        handDetector = HandDetector(detectionCon=0.8, maxHands=2)
+        #handDetector = HandDetector(detectionCon=0.8, maxHands=2)
 
         vid_data = b''
         cam_client.listen()
         conn, addr = cam_client.accept()
-        global connected, msg_size, avr_fps
+        global connected, msg_size, avr_fps, helpHand
         print("Camera receive stream started")
 
         hands_thread = threading.Thread(target=processHands)
@@ -129,7 +131,7 @@ def cam_start():
             #     print("Hands fingers: " + str(fingers1))
 
             # face detection
-            #frame, faces = faceDetector.findFaces(frame)
+            frame, faces = faceDetector.findFaces(frame)
 
             # face mesh detection
             #frame, faces = faceMeshDetector.findFaceMesh(frame)
@@ -137,10 +139,15 @@ def cam_start():
             hand_frames.append(frame)
 
             # add fps counter to frame
-            fps, frame = fpsReader.update(img=frame, pos=(40, 80), color=(0, 255, 0), scale=2, thickness=1)
+            fps, frame = fpsReader.update(img=frame, pos=(20, 40), color=(0, 255, 0), scale=2, thickness=1)
             #fps = fpsReader.update()
             avr_fps[0].append(datetime.datetime.now())
             avr_fps[1].append(fps)
+
+            if helpHand:
+                cv2.putText(frame, f'Help Needed', (20, 80), cv2.FONT_HERSHEY_PLAIN,
+                            2, (0, 0, 255), 1)
+                helpHand = False
 
             # show the data
             cv2.imshow("frame", frame)
@@ -152,12 +159,9 @@ def cam_start():
         print('-----> Exception: ' + str(e))
         connected = False
 
-def processFace(faces, detector):
-    pass
-
 def processHands():
-    handDetector = HandDetector(detectionCon=0.8, maxHands=2)
-    global hand_frames
+    handDetector = HandDetector(detectionCon=0.5, maxHands=1)
+    global hand_frames, helpHand
     while connected:
         if len(hand_frames) > 0:
 
@@ -166,14 +170,12 @@ def processHands():
             if hands:
                 # Hand 1
                 hand1 = hands[0]
-                lmList1 = hand1["lmList"]  # List of 21 Landmark points
-                bbox1 = hand1["bbox"]  # Bounding box info x,y,w,h
-                centerPoint1 = hand1['center']  # center of the hand cx,cy
-                handType1 = hand1["type"]  # Handtype Left or Right
 
                 fingers1 = handDetector.fingersUp(hand1)
-
-                print("Hands fingers: " + str(fingers1))
+                if helpGesture == fingers1:
+                    print(str(fingers1))
+                    print("HELP")
+                    helpHand = True
 
 def send(msg):
     # global can_send
@@ -288,11 +290,21 @@ if __name__ == '__main__':
 
     controller_thread.join()
 
+    timeNow = datetime.datetime.now()
+
     # plot fps over time
     plt.plot(avr_fps[0], avr_fps[1])
     plt.xlabel('Time (s)')
     plt.ylabel('FPS')
     plt.grid = True
-    title = "Frame rate over the period of the run. Avr FPS: {0}".format(str(sum(avr_fps[1]) / len(avr_fps[1])))
+    title = "Frame rate over the period of the run. Avr FPS: {0} ({1})".format(str(sum(avr_fps[1]) / len(avr_fps[1])), str(timeNow).replace(":", "-"))
     plt.gca().set_title(title, fontsize=8)
+    plt.savefig("Frame rate over the period of the run - Avr FPS - "
+                + str(sum(avr_fps[1]) / len(avr_fps[1])) + ".pdf", format="pdf")
     plt.show()
+
+    fileName = "AvrFPS_{0}.csv".format(str(timeNow).replace(":", "-"))
+    with open(fileName, "w+") as my_csv:
+        csvWriter = csv.writer(my_csv, delimiter=',')
+        for i in range(len(avr_fps[0])):
+            csvWriter.writerow([avr_fps[0][i], avr_fps[1][i]])

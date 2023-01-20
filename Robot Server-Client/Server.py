@@ -9,8 +9,8 @@ from sys import platform
 
 HEADER = 128  # Message length from the client to the server
 
-SERVER = socket.gethostbyname(socket.gethostname())  # FOR TESTING
-#SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())
+# SERVER = socket.gethostbyname(socket.gethostname())  # FOR TESTING
+SERVER = '192.168.1.202'  # socket.gethostbyname(socket.gethostname())
 # set the port of the server
 PORT = 5050
 PORT_CAM = 9999
